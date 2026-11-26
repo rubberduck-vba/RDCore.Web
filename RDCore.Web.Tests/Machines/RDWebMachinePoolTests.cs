@@ -84,6 +84,7 @@ public sealed class RDWebMachinePoolTests
         => RDWebMachinePool.StartAsync(maker.CreateAsync, options, Token, time);
 
     [TestMethod]
+    [Timeout(600_000, CooperativeCancellation = true)]
     public async Task APoolOfOneMachine_RunsASecondRequestOnlyOnceTheFirstHasReturned()
     {
         var held = new HeldMachine();
@@ -102,6 +103,7 @@ public sealed class RDWebMachinePoolTests
     }
 
     [TestMethod]
+    [Timeout(600_000, CooperativeCancellation = true)]
     public async Task APoolOfTwoMachines_RunsTwoRequestsAtOnce_EachOnAMachineOfItsOwn()
     {
         var held = new ConcurrentQueue<HeldMachine>();
@@ -128,6 +130,7 @@ public sealed class RDWebMachinePoolTests
     }
 
     [TestMethod]
+    [Timeout(600_000, CooperativeCancellation = true)]
     public async Task ThePool_MakesAMachineForARequestThatFindsNoneIdle_UpToItsMaximum()
     {
         var held = new ConcurrentQueue<HeldMachine>();
@@ -157,6 +160,7 @@ public sealed class RDWebMachinePoolTests
     }
 
     [TestMethod]
+    [Timeout(600_000, CooperativeCancellation = true)]
     public async Task ARequestCancelledWhileItWaits_DoesNotRun_AndTheMachineServesTheNextOne()
     {
         var held = new HeldMachine();
@@ -176,6 +180,7 @@ public sealed class RDWebMachinePoolTests
     }
 
     [TestMethod]
+    [Timeout(600_000, CooperativeCancellation = true)]
     public async Task AfterEachRequest_TheMachineIsReset_BeforeItServesTheNextOne()
     {
         var log = new ConcurrentQueue<string>();
@@ -200,6 +205,7 @@ public sealed class RDWebMachinePoolTests
     }
 
     [TestMethod]
+    [Timeout(600_000, CooperativeCancellation = true)]
     [DataRow(ExecutionOutcome.Completed)]
     [DataRow(ExecutionOutcome.RuntimeError)]
     [DataRow(ExecutionOutcome.Halted)]
@@ -218,6 +224,7 @@ public sealed class RDWebMachinePoolTests
     }
 
     [TestMethod]
+    [Timeout(600_000, CooperativeCancellation = true)]
     [DataRow(ExecutionOutcome.Interrupted)]
     [DataRow(ExecutionOutcome.Suspended)]
     [DataRow(ExecutionOutcome.Refused)]
@@ -237,6 +244,7 @@ public sealed class RDWebMachinePoolTests
     }
 
     [TestMethod]
+    [Timeout(600_000, CooperativeCancellation = true)]
     public async Task AMachineWhoseInvocationThrows_IsRecycled_AndAnotherServesTheNextOne()
     {
         var calls = 0;
@@ -254,6 +262,7 @@ public sealed class RDWebMachinePoolTests
     }
 
     [TestMethod]
+    [Timeout(600_000, CooperativeCancellation = true)]
     public async Task AMachine_IsRecycledOnceItHasServedRecycleAfterRequests()
     {
         var maker = new Maker(() => Answering(RDWebInvocationResult.Completed()));
@@ -272,6 +281,7 @@ public sealed class RDWebMachinePoolTests
     }
 
     [TestMethod]
+    [Timeout(600_000, CooperativeCancellation = true)]
     [DataRow(false)]
     [DataRow(true)]
     public async Task AMachineWhoseResetDoesNotComplete_IsRecycled(bool resetThrows)
@@ -338,6 +348,7 @@ public sealed class RDWebMachinePoolTests
     }
 
     [TestMethod]
+    [Timeout(600_000, CooperativeCancellation = true)]
     public async Task ARequestPastItsDeadline_IsCancelled_AndItsMachineRecycled()
     {
         var time = new FakeTimeProvider();
@@ -360,6 +371,7 @@ public sealed class RDWebMachinePoolTests
     }
 
     [TestMethod]
+    [Timeout(600_000, CooperativeCancellation = true)]
     public async Task ARequestWhoseMachineDoesNotStopAfterItsDeadline_AnswersInterrupted_AndItsMachineIsAbandonedAndReplaced()
     {
         var time = new FakeTimeProvider();
@@ -383,6 +395,7 @@ public sealed class RDWebMachinePoolTests
     }
 
     [TestMethod]
+    [Timeout(600_000, CooperativeCancellation = true)]
     public async Task ARequestThatWaitsForAMachinePastItsDeadline_IsRefused_AndNeverRuns()
     {
         var time = new FakeTimeProvider();
@@ -401,6 +414,7 @@ public sealed class RDWebMachinePoolTests
     }
 
     [TestMethod]
+    [Timeout(600_000, CooperativeCancellation = true)]
     public async Task DisposingThePool_DisposesItsIdleMachines_AndOneServingARequestOnceItEnds()
     {
         var held = new HeldMachine();
