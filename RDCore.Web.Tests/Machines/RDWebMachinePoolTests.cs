@@ -80,6 +80,9 @@ public sealed class RDWebMachinePoolTests
 
     private static ScriptedMachine Answering(RDWebInvocationResult result) => new(_ => result);
 
+    // a request to the pool, which the test's own hang guard (its token) ends if a broken pool never answers it.
+    private Task<RDWebInvocationResult> InvokeAsync(RDWebMachinePool pool) => pool.InvokeAsync(Invocation, Token).WaitAsync(Token);
+
     private Task<RDWebMachinePool> StartAsync(Maker maker, RDWebMachinePoolOptions options, TimeProvider? time = null)
         => RDWebMachinePool.StartAsync(maker.CreateAsync, options, Token, time);
 
@@ -90,9 +93,9 @@ public sealed class RDWebMachinePoolTests
         var held = new HeldMachine();
         await using var pool = await StartAsync(new Maker(() => held.Machine), OneMachine);
 
-        var first = pool.InvokeAsync(Invocation, Token);
+        var first = InvokeAsync(pool);
         await held.Entered.Reader.ReadAsync(Token);
-        var second = pool.InvokeAsync(Invocation, Token);
+        var second = InvokeAsync(pool);
 
         Assert.HasCount(1, held.Machine.Invocations, "the second request waits for the machine");
         held.Release.SetResult();
@@ -115,8 +118,8 @@ public sealed class RDWebMachinePoolTests
             return machine.Machine;
         }), new RDWebMachinePoolOptions { MinMachines = 2, MaxMachines = 2 });
 
-        var first = pool.InvokeAsync(Invocation, Token);
-        var second = pool.InvokeAsync(Invocation, Token);
+        var first = InvokeAsync(pool);
+        var second = InvokeAsync(pool);
         await entered.Reader.ReadAsync(Token);
         await entered.Reader.ReadAsync(Token);
 
@@ -143,9 +146,9 @@ public sealed class RDWebMachinePoolTests
         });
         await using var pool = await StartAsync(maker, new RDWebMachinePoolOptions { MinMachines = 1, MaxMachines = 2 });
 
-        var first = pool.InvokeAsync(Invocation, Token);
-        var second = pool.InvokeAsync(Invocation, Token);
-        var third = pool.InvokeAsync(Invocation, Token);
+        var first = InvokeAsync(pool);
+        var second = InvokeAsync(pool);
+        var third = InvokeAsync(pool);
         await entered.Reader.ReadAsync(Token);
         await entered.Reader.ReadAsync(Token);
 
@@ -165,7 +168,7 @@ public sealed class RDWebMachinePoolTests
     {
         var held = new HeldMachine();
         await using var pool = await StartAsync(new Maker(() => held.Machine), OneMachine);
-        var first = pool.InvokeAsync(Invocation, Token);
+        var first = InvokeAsync(pool);
         await held.Entered.Reader.ReadAsync(Token);
 
         using var cancelled = new CancellationTokenSource();
@@ -175,7 +178,7 @@ public sealed class RDWebMachinePoolTests
 
         held.Release.SetResult();
         await first;
-        await pool.InvokeAsync(Invocation, Token);
+        await InvokeAsync(pool);
         Assert.HasCount(2, held.Machine.Invocations, "the cancelled request never reached the machine");
     }
 
@@ -198,8 +201,8 @@ public sealed class RDWebMachinePoolTests
         };
         await using var pool = await StartAsync(new Maker(() => machine), OneMachine);
 
-        await pool.InvokeAsync(Invocation, Token);
-        await pool.InvokeAsync(Invocation, Token);
+        await InvokeAsync(pool);
+        await InvokeAsync(pool);
 
         CollectionAssert.AreEqual(new[] { "invoke", "reset", "invoke" }, log.Take(3).ToArray());
     }
@@ -215,8 +218,8 @@ public sealed class RDWebMachinePoolTests
         var maker = new Maker(() => Answering(ResultOf(outcome)));
         await using var pool = await StartAsync(maker, OneMachine);
 
-        await pool.InvokeAsync(Invocation, Token);
-        await pool.InvokeAsync(Invocation, Token);
+        await InvokeAsync(pool);
+        await InvokeAsync(pool);
 
         Assert.HasCount(1, maker.Made);
         Assert.HasCount(2, maker[0].Invocations);
@@ -233,8 +236,8 @@ public sealed class RDWebMachinePoolTests
         var maker = new Maker(() => Answering(ResultOf(outcome)));
         await using var pool = await StartAsync(maker, OneMachine);
 
-        await pool.InvokeAsync(Invocation, Token);
-        await pool.InvokeAsync(Invocation, Token);
+        await InvokeAsync(pool);
+        await InvokeAsync(pool);
 
         // the second request's machine is recycled too, so a third may be made already.
         Assert.IsTrue(maker.Made.Count >= 2, "the second request ran on another machine");
@@ -252,8 +255,8 @@ public sealed class RDWebMachinePoolTests
             Interlocked.Increment(ref calls) == 1 ? throw new InvalidOperationException("the session failed") : RDWebInvocationResult.Completed()));
         await using var pool = await StartAsync(maker, OneMachine);
 
-        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => pool.InvokeAsync(Invocation, Token));
-        var result = await pool.InvokeAsync(Invocation, Token);
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => InvokeAsync(pool));
+        var result = await InvokeAsync(pool);
 
         Assert.AreEqual(ExecutionOutcome.Completed, result.Outcome);
         Assert.HasCount(2, maker.Made, "the second request ran on another machine");
@@ -270,7 +273,7 @@ public sealed class RDWebMachinePoolTests
 
         for (var request = 0; request < 3; request++)
         {
-            await pool.InvokeAsync(Invocation, Token);
+            await InvokeAsync(pool);
         }
 
         Assert.HasCount(2, maker.Made, "the third request ran on another machine");
@@ -292,8 +295,8 @@ public sealed class RDWebMachinePoolTests
         });
         await using var pool = await StartAsync(maker, OneMachine);
 
-        await pool.InvokeAsync(Invocation, Token);
-        await pool.InvokeAsync(Invocation, Token);
+        await InvokeAsync(pool);
+        await InvokeAsync(pool);
 
         // the second machine's reset fails too, so a third may be made already.
         Assert.IsTrue(maker.Made.Count >= 2, "the second request ran on another machine");
@@ -326,12 +329,12 @@ public sealed class RDWebMachinePoolTests
         await using var pool = await StartAsync(maker, options, time);
         try
         {
-            await pool.InvokeAsync(Invocation, Token);
+            await InvokeAsync(pool);
             var resetToken = await resetting.Reader.ReadAsync(Token);
             time.Advance(options.ResetTimeout);
             Assert.IsTrue(resetToken.IsCancellationRequested, "the reset's deadline cancels it");
             time.Advance(options.StopTimeout);
-            await pool.InvokeAsync(Invocation, Token);
+            await InvokeAsync(pool);
 
             Assert.AreEqual(1, pool.Abandoned);
             Assert.AreEqual(1, pool.Size);
@@ -361,7 +364,7 @@ public sealed class RDWebMachinePoolTests
         });
         await using var pool = await StartAsync(maker, OneMachine, time);
 
-        var request = pool.InvokeAsync(Invocation, Token);
+        var request = InvokeAsync(pool);
         await held.First().Entered.Reader.ReadAsync(Token);
         time.Advance(OneMachine.RequestTimeout);
 
@@ -380,11 +383,11 @@ public sealed class RDWebMachinePoolTests
         var maker = new Maker(() => Interlocked.Increment(ref made) == 1 ? stuck.Machine : Answering(RDWebInvocationResult.Completed()));
         await using var pool = await StartAsync(maker, OneMachine, time);
 
-        var request = pool.InvokeAsync(Invocation, Token);
+        var request = InvokeAsync(pool);
         await stuck.Entered.Reader.ReadAsync(Token);
         time.Advance(OneMachine.RequestTimeout + OneMachine.StopTimeout);
         var result = await request;
-        await pool.InvokeAsync(Invocation, Token);
+        await InvokeAsync(pool);
 
         Assert.AreEqual(ExecutionOutcome.Interrupted, result.Outcome);
         Assert.AreEqual(1, pool.Abandoned);
@@ -401,10 +404,10 @@ public sealed class RDWebMachinePoolTests
         var time = new FakeTimeProvider();
         var held = new HeldMachine(stopsWhenCancelled: false);
         await using var pool = await StartAsync(new Maker(() => held.Machine), OneMachine, time);
-        var first = pool.InvokeAsync(Invocation, Token);
+        var first = InvokeAsync(pool);
         await held.Entered.Reader.ReadAsync(Token);
 
-        var waiting = pool.InvokeAsync(Invocation, Token);
+        var waiting = InvokeAsync(pool);
         time.Advance(OneMachine.RequestTimeout);
 
         Assert.AreEqual(ExecutionOutcome.Refused, (await waiting).Outcome);
@@ -422,14 +425,14 @@ public sealed class RDWebMachinePoolTests
         var made = 0;
         var pool = await StartAsync(new Maker(() => Interlocked.Increment(ref made) == 1 ? held.Machine : idle),
             new RDWebMachinePoolOptions { MinMachines = 2, MaxMachines = 2 });
-        var request = pool.InvokeAsync(Invocation, Token);
+        var request = InvokeAsync(pool);
         await held.Entered.Reader.ReadAsync(Token);
 
         await pool.DisposeAsync();
 
         Assert.IsTrue(idle.IsDisposed);
         Assert.IsFalse(held.Machine.IsDisposed, "a machine serving a request is disposed once it ends");
-        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(() => pool.InvokeAsync(Invocation, Token));
+        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(() => InvokeAsync(pool));
         held.Release.SetResult();
         await request;
         await held.Machine.Disposed.WaitAsync(Token);
