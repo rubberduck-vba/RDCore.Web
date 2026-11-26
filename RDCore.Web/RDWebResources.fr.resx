@@ -18,8 +18,17 @@
   <data name="Endpoint_RouteParameterIsNoParameter" xml:space="preserve">
     <value>Le paramètre de route '{0}' de {1}.{2} n'est pas un paramètre de la procédure.</value>
   </data>
-  <data name="Pool_NoMachine" xml:space="preserve">
-    <value>Un bassin de machines contient au moins une machine.</value>
+  <data name="Pool_InvalidSize" xml:space="preserve">
+    <value>Un bassin de machines contient au moins une machine, et son minimum est entre 0 et son maximum.</value>
+  </data>
+  <data name="Pool_InvalidLimit" xml:space="preserve">
+    <value>Un bassin de machines recycle une machine après au moins une requête, et chacun de ses délais est positif.</value>
+  </data>
+  <data name="Pool_NoMachineInTime" xml:space="preserve">
+    <value>Aucune machine n'était libre avant l'échéance de la requête.</value>
+  </data>
+  <data name="Pool_MachineDidNotStop" xml:space="preserve">
+    <value>La requête a dépassé son échéance, et sa machine ne s'est pas arrêtée.</value>
   </data>
   <data name="Request_BodyIsNotJson" xml:space="preserve">
     <value>Le corps de la requête n'est pas du JSON valide.</value>

@@ -12,7 +12,10 @@ internal static class RDWebResources
 
     public static string Endpoint_InvalidRoute => Get(nameof(Endpoint_InvalidRoute));
     public static string Endpoint_RouteParameterIsNoParameter => Get(nameof(Endpoint_RouteParameterIsNoParameter));
-    public static string Pool_NoMachine => Get(nameof(Pool_NoMachine));
+    public static string Pool_InvalidSize => Get(nameof(Pool_InvalidSize));
+    public static string Pool_InvalidLimit => Get(nameof(Pool_InvalidLimit));
+    public static string Pool_NoMachineInTime => Get(nameof(Pool_NoMachineInTime));
+    public static string Pool_MachineDidNotStop => Get(nameof(Pool_MachineDidNotStop));
     public static string Request_BodyIsNotJson => Get(nameof(Request_BodyIsNotJson));
     public static string Request_BodyMustBeJson => Get(nameof(Request_BodyMustBeJson));
     public static string Problem_RuntimeError => Get(nameof(Problem_RuntimeError));

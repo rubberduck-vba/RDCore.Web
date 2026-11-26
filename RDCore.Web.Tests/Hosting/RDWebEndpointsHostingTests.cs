@@ -201,7 +201,9 @@ public sealed class RDWebEndpointsHostingTests
     {
         var calls = 0;
         var machine = new ScriptedMachine(_ => RDWebInvocationResult.Returned(JsonValue.Create(Interlocked.Increment(ref calls))));
-        await using var app = await StartAsync(new RDWebMachinePool([machine]), Endpoint(RDWebAnnotations.HttpGet, "next"));
+        await using var pool = await RDWebMachinePool.StartAsync(_ => Task.FromResult<IRDWebPooledMachine>(machine),
+            new RDWebMachinePoolOptions { MinMachines = 1, MaxMachines = 1 }, TestContext.CancellationToken);
+        await using var app = await StartAsync(pool, Endpoint(RDWebAnnotations.HttpGet, "next"));
 
         var answers = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => app.Client.GetStringAsync("api/orders/next", TestContext.CancellationToken)));
 

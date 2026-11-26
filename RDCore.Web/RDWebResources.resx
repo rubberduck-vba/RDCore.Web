@@ -18,8 +18,17 @@
   <data name="Endpoint_RouteParameterIsNoParameter" xml:space="preserve">
     <value>The route parameter '{0}' of {1}.{2} is not a parameter of the procedure.</value>
   </data>
-  <data name="Pool_NoMachine" xml:space="preserve">
-    <value>A machine pool holds at least one machine.</value>
+  <data name="Pool_InvalidSize" xml:space="preserve">
+    <value>A machine pool holds at least one machine, and its minimum is between 0 and its maximum.</value>
+  </data>
+  <data name="Pool_InvalidLimit" xml:space="preserve">
+    <value>A machine pool recycles a machine after at least one request, and each of its timeouts is positive.</value>
+  </data>
+  <data name="Pool_NoMachineInTime" xml:space="preserve">
+    <value>No machine was free before the request's deadline.</value>
+  </data>
+  <data name="Pool_MachineDidNotStop" xml:space="preserve">
+    <value>The request ran past its deadline, and its machine did not stop.</value>
   </data>
   <data name="Request_BodyIsNotJson" xml:space="preserve">
     <value>The request body is not valid JSON.</value>

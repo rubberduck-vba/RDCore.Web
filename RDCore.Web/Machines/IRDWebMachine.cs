@@ -5,8 +5,8 @@ namespace RDCore.Web.Machines;
 /// </summary>
 /// <remarks>
 /// A machine runs one invocation at a time, from a clean program state: its module-level variables, objects, open files and error state are reset between
-/// two invocations, so that nothing of one request reaches the next. Concurrency comes from several machines (<see cref="RDWebMachinePool"/>), never from
-/// two requests in one machine.
+/// two invocations (<see cref="IRDWebPooledMachine.ResetAsync"/>), so that nothing of one request reaches the next. Concurrency comes from several machines
+/// (<see cref="RDWebMachinePool"/>), never from two requests in one machine.
 /// </remarks>
 public interface IRDWebMachine
 {
