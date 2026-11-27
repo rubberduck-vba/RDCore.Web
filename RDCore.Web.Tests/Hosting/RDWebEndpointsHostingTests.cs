@@ -197,6 +197,19 @@ public sealed class RDWebEndpointsHostingTests
     }
 
     [TestMethod]
+    public async Task AControllerWithNoRoute_ServesTheRequestsForItsNameLessTheControllerSuffix_InAnyCase()
+    {
+        var machine = new ScriptedMachine(_ => RDWebInvocationResult.Completed());
+        var endpoint = RDWebEndpoint.FromAnnotation("ThingsController", null, "All", [], RDWebAnnotations.HttpGet, "all")!;
+        await using var app = await StartAsync(machine, endpoint);
+
+        using var response = await app.Client.GetAsync("things/all", TestContext.CancellationToken);
+
+        Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.AreEqual("ThingsController", machine.Invocations.Single().ModuleName);
+    }
+
+    [TestMethod]
     public async Task ThroughAPoolOfOneMachine_EveryRequestIsServed()
     {
         var calls = 0;

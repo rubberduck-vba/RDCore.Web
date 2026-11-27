@@ -15,7 +15,7 @@ public static class RDWebAnnotations
 {
     /// <summary>
     /// The module annotation that makes a module a controller: <c>'@Controller("orders")</c>. Its argument is the route that prefixes the routes of the
-    /// module's endpoints; without one, the module's name is.
+    /// module's endpoints; without one, the module's name less a <c>Controller</c> suffix is (<see cref="RDWebEndpoint.ConventionalRouteOf"/>).
     /// </summary>
     public const string Controller = "Controller";
 
