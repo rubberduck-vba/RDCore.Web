@@ -1,2 +1,4 @@
 - name: "RDCore.Web Reference"
   href: rdweb.md
+- name: "8.0 JSON Values"
+  href: rdweb.8.0.json-values.md
