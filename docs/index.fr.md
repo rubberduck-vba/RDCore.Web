@@ -33,7 +33,7 @@ End Function
 
 |Lecteur|Ce que RDCore.Web offre|
 |---|---|
-|Un développeur VBA|Une API web écrite en VBA, avec les annotations que connaissent les utilisateurs de Rubberduck.|
+|Un développeur VBA|Une API web écrite en VBA, déclarée par des annotations en commentaire, comme les écrivent les utilisateurs de Rubberduck.|
 |Un consultant qui amène un parc VBA vers le web|Une voie qui garde le code VBA derrière toute interface, au lieu de le réécrire d'abord.|
 |Un développeur .NET qui héberge l'application|Une bibliothèque ASP.NET Core : les points de terminaison sont associés au routage d'ASP.NET Core, et Kestrel les sert.|
 
