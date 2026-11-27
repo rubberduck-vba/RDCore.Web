@@ -37,8 +37,17 @@ public sealed class RDWebEndpointTests
         => Assert.IsNull(RDWebEndpoint.FromAnnotation("OrdersController", "api/orders", "GetOrder", [], "Description", "x"));
 
     [TestMethod]
-    public void AControllerWithNoRoute_IsRoutedUnderItsModuleName()
-        => Assert.AreEqual("/OrdersController/all", Declare(RDWebAnnotations.HttpGet, "all", controllerRoute: null).Route);
+    public void AControllerWithNoRoute_IsRoutedUnderItsModuleName_LessItsControllerSuffix()
+        => Assert.AreEqual("/Orders/all", Declare(RDWebAnnotations.HttpGet, "all", controllerRoute: null).Route);
+
+    [TestMethod]
+    [DataRow("ThingsController", "Things")]
+    [DataRow("thingsCONTROLLER", "things")]
+    [DataRow("Things", "Things")]
+    [DataRow("Controller", "Controller")]
+    [DataRow("ControllerOfThings", "ControllerOfThings")]
+    public void TheConventionalRoute_IsTheModuleName_LessATrailingControllerSuffix_WhenAnythingIsLeft(string moduleName, string expected)
+        => Assert.AreEqual(expected, RDWebEndpoint.ConventionalRouteOf(moduleName));
 
     [TestMethod]
     public void AMemberAnnotationWithNoRoute_ServesTheControllersRoute()

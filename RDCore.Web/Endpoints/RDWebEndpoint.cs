@@ -63,8 +63,8 @@ public sealed record class RDWebEndpoint
     /// </summary>
     /// <param name="moduleName">The name of the controller module.</param>
     /// <param name="controllerRoute">
-    /// The argument of the module's <c>'@Controller</c> annotation; <see langword="null"/> when it writes none, which routes the controller under the module's
-    /// name.
+    /// The argument of the module's <c>'@Controller</c> annotation; <see langword="null"/> when it writes none, which routes the controller under its
+    /// conventional route (<see cref="ConventionalRouteOf"/>).
     /// </param>
     /// <param name="procedureName">The name of the annotated procedure.</param>
     /// <param name="parameters">The names of the procedure's parameters, in the order it declares them.</param>
@@ -85,7 +85,7 @@ public sealed record class RDWebEndpoint
             return null;
         }
 
-        var template = Combine(controllerRoute ?? moduleName, route);
+        var template = Combine(controllerRoute ?? ConventionalRouteOf(moduleName), route);
         RoutePattern pattern;
         try
         {
@@ -108,6 +108,20 @@ public sealed record class RDWebEndpoint
         var body = method == HttpMethods.Post ? parameters.FirstOrDefault(parameter => !bound.Contains(parameter)) : null;
         return new RDWebEndpoint(method, template, moduleName, procedureName, [.. parameters], routeParameters, body);
     }
+
+    /// <summary>
+    /// The route of a controller whose <c>'@Controller</c> annotation writes none: its module's name, less a <c>Controller</c> suffix, as ASP.NET Core
+    /// names a controller. <c>ThingsController</c> is routed under <c>Things</c>, which a request for <c>/things</c> matches, since routes match without
+    /// regard to case.
+    /// </summary>
+    /// <param name="moduleName">The name of the controller module.</param>
+    /// <returns>
+    /// The name less its last ten letters when it ends with <c>Controller</c>, in any case, and has letters before it; the name as written otherwise.
+    /// </returns>
+    public static string ConventionalRouteOf(string moduleName)
+        => moduleName.Length > Suffix.Length && moduleName.EndsWith(Suffix, StringComparison.OrdinalIgnoreCase) ? moduleName[..^Suffix.Length] : moduleName;
+
+    private const string Suffix = "Controller";
 
     // a route from the root: the controller's, then the member's, unless the member's starts at the root itself.
     private static string Combine(string controllerRoute, string? route)

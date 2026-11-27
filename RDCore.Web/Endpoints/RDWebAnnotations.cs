@@ -7,15 +7,15 @@ namespace RDCore.Web.Endpoints;
 /// its procedures.
 /// </summary>
 /// <remarks>
-/// They are RD-VBA comment annotations (RD-VBAL §3.0.1.1): to MS-VBA they are comments. <c>'@Controller</c> is a module annotation, written in the module's
-/// declarations section; <c>'@HttpGet</c> and <c>'@HttpPost</c> are member annotations, written immediately above the procedure. Each takes one optional
-/// string argument, its route template.
+/// They are RD-VBA comment annotations (<strong>RD-VBAL §3.0.1.1</strong>): to MS-VBA they are comments. <c>'@Controller</c> is a module annotation,
+/// written in the module's declarations section; <c>'@HttpGet</c> and <c>'@HttpPost</c> are member annotations, written immediately above the procedure.
+/// Each takes one optional string argument, its route template.
 /// </remarks>
 public static class RDWebAnnotations
 {
     /// <summary>
     /// The module annotation that makes a module a controller: <c>'@Controller("orders")</c>. Its argument is the route that prefixes the routes of the
-    /// module's endpoints; without one, the module's name is.
+    /// module's endpoints; without one, the module's name less a <c>Controller</c> suffix is (<see cref="RDWebEndpoint.ConventionalRouteOf"/>).
     /// </summary>
     public const string Controller = "Controller";
 

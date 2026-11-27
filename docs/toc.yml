@@ -1,0 +1,12 @@
+- name: Overview
+  href: overview.md
+- name: Getting Started
+  href: getting-started.md
+- name: Reference
+  href: specs/
+- name: API
+  href: api/
+- name: RDCore
+  href: https://rubberduck-vba.github.io/RDCore/
+- name: SDK
+  href: https://rubberduck-vba.github.io/RDCore.SDK/

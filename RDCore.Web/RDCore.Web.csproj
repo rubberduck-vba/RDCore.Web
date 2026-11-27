@@ -6,6 +6,8 @@
     <!-- the package of this repository. -->
     <IsPackable>true</IsPackable>
     <PackageId>RDCore.Web</PackageId>
+    <!-- a framework: its public API is documented, and a public member without an xmldoc fails the build. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
