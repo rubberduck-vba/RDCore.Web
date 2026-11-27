@@ -7,7 +7,7 @@
 > 👋 Hi! New here? _Rubberduck_ was always an open-source initiative. **RDCore honors it with an Open-Core formula**.  
 > <small>See [rubberduckvba.ca](https://rubberduckvba.ca) for more information.</small>
 
-This repository is for **RDCore.Web**, the web framework of [RDCore](https://github.com/rubberduck-vba/RDCore), under **⚖️GPLv3 or later**. RDCore.Web serves the class modules of an RD-VBA project through ASP.NET Core. Rubberduck annotations such as `'@Controller`, `'@HttpGet` and `'@Authorize` describe the endpoints, and the frontend can be any Node.js app.
+This repository is for **RDCore.Web**, the web framework of [RDCore](https://github.com/rubberduck-vba/RDCore), under **⚖️GPLv3 or later**. RDCore.Web serves the class modules of an RD-VBA project through ASP.NET Core. Rubberduck annotations such as `'@Controller`, `'@HttpGet` and `'@HttpPost` describe the endpoints, and the frontend can be any Node.js app.
 
 The RD-VBA language model comes from the [RDCore.SDK](https://github.com/rubberduck-vba/RDCore.SDK) package. What you build with RDCore.Web is yours (see [NOTICE.md](NOTICE.md)). The documentation is on the [RDCore.Web site](https://rubberduck-vba.github.io/RDCore.Web/).
 
