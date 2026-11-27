@@ -107,7 +107,7 @@ The argument is a string literal: the endpoint's route, under the controller's.
 
 The annotation declares an endpoint for the HTTP `POST` method, served by the procedure immediately below it. Its route is made as
 [§3.2](rdweb.3.0.routes.md#32-endpoint-routes) describes. The first parameter of the procedure that the route does not bind is the body parameter: the
-request's body binds to it. A `POST` whose route binds every parameter has no body parameter.
+request's JSON body binds to it. A `POST` whose route binds every parameter has no body parameter.
 
 ### Runtime Semantics
 
