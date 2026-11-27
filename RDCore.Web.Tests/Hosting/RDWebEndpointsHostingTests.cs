@@ -98,6 +98,18 @@ public sealed class RDWebEndpointsHostingTests
     }
 
     [TestMethod]
+    public async Task AQueryStringNameGivenTwice_BindsItsValuesJoinedByCommas()
+    {
+        var machine = new ScriptedMachine(_ => RDWebInvocationResult.Completed());
+        await using var app = await StartAsync(machine, Endpoint(RDWebAnnotations.HttpGet, "tagged", "tag"));
+
+        using var response = await app.Client.GetAsync("api/orders/tagged?tag=a&tag=b", TestContext.CancellationToken);
+
+        Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.AreEqual("a,b", (string?)machine.Invocations.Single().Arguments["tag"]);
+    }
+
+    [TestMethod]
     public async Task APostedJsonBody_BindsTheBodyParameter_AsTheJsonItHolds()
     {
         var machine = new ScriptedMachine(_ => RDWebInvocationResult.Returned(JsonValue.Create(1)));
@@ -113,6 +125,34 @@ public sealed class RDWebEndpointsHostingTests
         Assert.AreEqual("duck", (string?)line["item"]);
         Assert.AreEqual(3, (int?)line["quantity"]);
         Assert.IsTrue((bool?)line["gift"]);
+    }
+
+    [TestMethod]
+    public async Task APostedJsonBody_ReplacesAQueryStringValueOfTheSameName()
+    {
+        var machine = new ScriptedMachine(_ => RDWebInvocationResult.Completed());
+        await using var app = await StartAsync(machine, Endpoint(RDWebAnnotations.HttpPost, "lines", "line"));
+
+        using var response = await app.Client.PostAsync("api/orders/lines?line=queried", Json("""{ "item": "duck" }"""), TestContext.CancellationToken);
+
+        Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
+        var line = machine.Invocations.Single().Arguments["line"];
+        Assert.AreEqual(JsonValueKind.Object, line!.GetValueKind(), $"the body binds the parameter, not the query string: {line.ToJsonString()}");
+        Assert.AreEqual("duck", (string?)line["item"]);
+    }
+
+    [TestMethod]
+    public async Task APostWithNoBody_ReadsNothing_AndItsBodyParameterBindsFromTheQueryString()
+    {
+        var machine = new ScriptedMachine(_ => RDWebInvocationResult.Completed());
+        await using var app = await StartAsync(machine, Endpoint(RDWebAnnotations.HttpPost, "lines", "line"));
+
+        // Content-Length: 0, of a media type that a body would be refused for.
+        var nothing = new StringContent(string.Empty, Encoding.UTF8, "text/plain");
+        using var response = await app.Client.PostAsync("api/orders/lines?line=queried", nothing, TestContext.CancellationToken);
+
+        Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode, "no body is read, so its media type is not checked");
+        Assert.AreEqual("queried", (string?)machine.Invocations.Single().Arguments["line"]);
     }
 
     [TestMethod]
