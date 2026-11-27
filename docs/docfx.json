@@ -1,6 +1,23 @@
 {
   "$schema": "https://raw.githubusercontent.com/dotnet/docfx/main/schemas/docfx.schema.json",
+  "metadata": [
+    {
+      "src": [
+        {
+          "src": "../RDCore.Web",
+          "files": [
+            "RDCore.Web.csproj"
+          ]
+        }
+      ],
+      "dest": "api"
+    }
+  ],
   "build": {
+    "xref": [
+      "https://rubberduck-vba.github.io/RDCore.SDK/xrefmap.yml",
+      "https://rubberduck-vba.github.io/RDCore.SDK.Protocols/xrefmap.yml"
+    ],
     "content": [
       {
         "files": [

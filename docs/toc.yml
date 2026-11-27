@@ -1,3 +1,7 @@
+- name: Reference
+  href: specs/
+- name: API
+  href: api/
 - name: RDCore
   href: https://rubberduck-vba.github.io/RDCore/
 - name: SDK
