@@ -33,15 +33,16 @@ End Function
 
 |Partie|État|
 |---|---|
-|Les points de terminaison de `'@Controller`, `'@HttpGet` et `'@HttpPost` : la méthode HTTP, et la route sous celle du contrôleur|Fonctionne, à partir du nom et de l'argument de chaque annotation.|
-|La liaison : les valeurs de la route et de la chaîne de requête aux paramètres de leur nom, et le corps d'un `POST` à un paramètre|Fonctionne.|
+|Les points de terminaison de `'@Controller`, `'@HttpGet` et `'@HttpPost` : la méthode HTTP, et la route sous celle du contrôleur|Fonctionne : lus de l'analyse d'un module.|
+|La liaison : les valeurs de la route et de la chaîne de requête aux paramètres de leur nom, et le corps d'un `POST` au paramètre que nomme `'@FromBody`|Fonctionne.|
+|Les diagnostics : un `POST` qui ne nomme aucun paramètre de corps, et un paramètre que rien ne lie|Fonctionne, avec un correctif rapide qui ajoute `'@FromBody`.|
 |Les réponses : la valeur de la procédure en JSON, aucune valeur, une erreur d'exécution en corps « problem details »|Fonctionne.|
 |Un bassin de machines, chacune n'exécutant qu'une requête à la fois|Fonctionne.|
 |L'hôte : une page qui appelle un point de terminaison et affiche sa réponse|Fonctionne. L'hôte n'associe aucun point de terminaison.|
 
 > [!NOTE]
-> **Non implémenté.** Aucune machine n'exécute une procédure dans une session d'exécution RDCore, et rien ne lit les annotations dans le code source d'un
-> module. La requête d'un point de terminaison parvient à une machine, mais aucun code RD-VBA n'y répond.
+> **Non implémenté.** Aucune machine n'exécute une procédure dans une session d'exécution RDCore, et l'hôte ne lit aucun module. La requête d'un point
+> de terminaison parvient à une machine, mais aucun code RD-VBA n'y répond.
 
 ---
 ## Pour la suite

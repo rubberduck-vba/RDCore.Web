@@ -7,8 +7,8 @@ La [référence de RDCore.Web](specs/rdweb.md), en anglais, donne les règles de
 
 > [!NOTE]
 > **Non implémenté.** Aucune procédure RD-VBA ne s'exécute de bout en bout : aucune machine n'exécute une procédure dans une session d'exécution RDCore,
-> et rien ne lit les annotations dans le code source d'un module. Les étapes qui suivent la réception de la requête par une machine décrivent ce que fait
-> RDCore.Web de la réponse d'une machine.
+> et l'hôte ne lit aucun module. Les étapes qui suivent la réception de la requête par une machine décrivent ce que fait RDCore.Web de la réponse d'une
+> machine.
 
 ---
 ## D'un module de classe à une réponse
@@ -34,6 +34,7 @@ Public Function Order(ByVal id As Variant, Optional ByVal format As Variant) As 
 End Function
 
 '@HttpPost("{id}/lines")
+'@FromBody("line")
 Public Function AddLine(ByVal id As Variant, ByVal line As Variant) As Variant
     ' ...
 End Function
@@ -46,7 +47,7 @@ End Function
 |`POST /api/orders/7/lines` avec `{ "item": "duck", "quantity": 3 }`|`AddLine`|`id` vaut `"7"`; `line` reçoit le JSON du corps.|
 
 Les valeurs de la route et de la chaîne de requête sont liées comme chaînes, au paramètre de leur nom sans égard à la casse. Le corps d'un `POST` est lié
-au premier paramètre que la route ne lie pas.
+au paramètre que nomme `'@FromBody`, sinon au premier paramètre que la route ne lie pas.
 
 ---
 ## Toute interface
@@ -69,6 +70,7 @@ Les annotations tiennent le rôle des attributs de contrôleur d'ASP.NET Core :
 |`'@Controller` sans argument sur `OrdersController`|`[Route("[controller]")]` sur `OrdersController` : `Orders`|[Routage vers les actions du contrôleur](https://learn.microsoft.com/fr-fr/aspnet/core/mvc/controllers/routing)|
 |`'@HttpGet("{id}")` sur une procédure|`[HttpGet("{id}")]` sur une action|[`HttpGetAttribute`](https://learn.microsoft.com/fr-fr/dotnet/api/microsoft.aspnetcore.mvc.httpgetattribute)|
 |`'@HttpPost` sur une procédure|`[HttpPost]` sur une action|[`HttpPostAttribute`](https://learn.microsoft.com/fr-fr/dotnet/api/microsoft.aspnetcore.mvc.httppostattribute)|
+|`'@FromBody("line")` sur une procédure|`[FromBody]` sur le paramètre `line`|[`FromBodyAttribute`](https://learn.microsoft.com/fr-fr/dotnet/api/microsoft.aspnetcore.mvc.frombodyattribute)|
 |Une route comme `hello/{name}`|Un modèle de route|[Modèles de route](https://learn.microsoft.com/fr-fr/aspnet/core/fundamentals/routing#route-templates)|
 |Les valeurs de la route, de la chaîne de requête et du corps aux paramètres|La liaison de modèle|[Liaison de modèle](https://learn.microsoft.com/fr-fr/aspnet/core/mvc/models/model-binding)|
 |Une erreur d'exécution en `500`|Une réponse « problem details »|[Détails du problème](https://learn.microsoft.com/fr-fr/aspnet/core/fundamentals/error-handling#problem-details)|
@@ -96,7 +98,7 @@ utiliser.
 |Un contrôleur sans route, sous son nom moins `Controller`|`RDWebEndpointTests.AControllerWithNoRoute_IsRoutedUnderItsModuleName_LessItsControllerSuffix`|
 |Les valeurs de route sont liées comme chaînes, sans égard à la casse|`RDWebEndpointsHostingTests.TheRouteValues_BindTheirParameters_AsStrings`|
 |Une valeur de la chaîne de requête lie le paramètre de son nom|`RDWebEndpointsHostingTests.AQueryStringValue_BindsTheParameterOfItsName_AndAParameterNothingBinds_GetsNoArgument`|
-|Le corps d'un `POST` lie le premier paramètre que la route ne lie pas|`RDWebEndpointTests.ThePostBody_BindsTheFirstParameterTheRouteDoesNotBind`, `RDWebEndpointsHostingTests.APostedJsonBody_BindsTheBodyParameter_AsTheJsonItHolds`|
+|Le corps d'un `POST` lie le paramètre que nomme `'@FromBody`, sinon le premier paramètre que la route ne lie pas|`RDWebEndpointTests.ThePostBody_BindsTheParameterFromBodyNames_InTheSpellingOfTheProcedure`, `RDWebEndpointTests.ThePostBody_BindsTheFirstParameterTheRouteDoesNotBind`, `RDWebEndpointsHostingTests.APostedJsonBody_BindsTheBodyParameter_AsTheJsonItHolds`|
 |La valeur est le corps JSON; aucune valeur donne `204`|`RDWebEndpointsHostingTests.TheValueAProcedureReturns_IsTheJsonBodyOfTheResponse`, `RDWebEndpointsHostingTests.AProcedureThatReturnsNoValue_AnswersNoContent`|
 |Une erreur d'exécution donne `500` avec son numéro et son code|`RDWebEndpointsHostingTests.ARunTimeError_AnswersInternalServerError_WithTheErrorsNumberAndCode`|
 |Une machine n'exécute qu'une requête à la fois|`RDWebMachinePoolTests.APoolOfOneMachine_RunsASecondRequestOnlyOnceTheFirstHasReturned`|

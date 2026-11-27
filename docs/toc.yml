@@ -4,6 +4,8 @@
   href: getting-started.md
 - name: Reference
   href: specs/
+- name: Diagnostics
+  href: diagnostics/
 - name: API
   href: api/
 - name: RDCore
