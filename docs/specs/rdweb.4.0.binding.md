@@ -20,8 +20,8 @@ End Function
 |`POST /api/orders/7/lines?notify=yes` with `{ "item": "duck", "quantity": 3 }`|`"7"`, from the route|The body's JSON|`"yes"`, from the query string|
 |`POST /api/orders/7/lines` with the same body|`"7"`|The body's JSON|No argument|
 
-Argument names match parameters without regard to case, as VBA names do. A parameter that nothing binds gets no argument: the procedure's `Optional`
-parameter is missing, or takes its default value ([§8.3](rdweb.8.0.json-values.md#83-arguments)).
+Argument names match parameters without regard to case, as VBA names do. A parameter that nothing binds gets no argument: an `Optional` parameter is
+missing or takes its default value, and any other is error 449 ([§8.3](rdweb.8.0.json-values.md#83-arguments)).
 
 ---
 ## 4.1 Route Values
@@ -45,14 +45,14 @@ The request's query string: `?format=short`.
 ### Runtime Semantics
 
 A query string value binds to the parameter of its name that the route does not bind, as a JSON string. A query string value that names no parameter
-binds nothing.
+binds nothing. A name given more than once binds its values joined by commas: `?tag=a&tag=b` binds `"a,b"`.
 
 ---
 ## 4.3 Request Body
 
 ### Syntax
 
-The body of a `POST` request, of the JSON media type (`application/json`).
+The body of a `POST` request, of a JSON media type: `application/json`, or a type whose suffix is `+json`.
 
 ### Static Semantics
 
@@ -62,9 +62,10 @@ Only a `POST` endpoint with a body parameter reads a body: the first parameter i
 
 |Request body|Effect|
 |---|---|
-|Valid JSON, of the JSON media type|The body's JSON binds to the body parameter, as it is: an object, an array, a string, a number, `true`, `false` or `null`.|
+|Valid JSON, of a JSON media type|The body's JSON binds to the body parameter, as it is: an object, an array, a string, a number, `true`, `false` or `null`. It replaces a query string value of the same name.|
 |Not valid JSON|`400 Bad Request` with a problem details body, and the procedure does not run.|
-|Not of the JSON media type|`415 Unsupported Media Type` with a problem details body, and the procedure does not run.|
+|Not of a JSON media type|`415 Unsupported Media Type` with a problem details body, and the procedure does not run.|
+|No body (`Content-Length: 0`)|Nothing is read, whatever the media type. The body parameter binds as any other parameter: from a query string value of its name, or not at all.|
 
 The problem details body's `detail` says which of the two it is ("The request body is not valid JSON.", "The request body of this endpoint is JSON
 (application/json)."), in English or French, by the application's UI culture.
