@@ -35,27 +35,31 @@ Where a page relies on ASP.NET Core (routing, model binding, problem details, Ke
 A section not yet written is listed without a link.
 
 - 1.0 Applications
-- 2.0 Annotations
-  - 2.1 `'@Controller`
-  - 2.2 `'@HttpGet`
-  - 2.3 `'@HttpPost`
-- 3.0 Routes
-  - 3.1 Controller Routes
-  - 3.2 Endpoint Routes
-  - 3.3 Route Parameters
-- 4.0 Binding
-  - 4.1 Route Values
-  - 4.2 Query String Values
-  - 4.3 Request Body
-- 5.0 Responses
-  - 5.1 Returned Values
-  - 5.2 Run-time Errors
-  - 5.3 Other Outcomes
+- [2.0 Annotations](rdweb.2.0.annotations.md)
+  - [2.1 `'@Controller`](rdweb.2.0.annotations.md#21-controller)
+  - [2.2 `'@HttpGet`](rdweb.2.0.annotations.md#22-httpget)
+  - [2.3 `'@HttpPost`](rdweb.2.0.annotations.md#23-httppost)
+- [3.0 Routes](rdweb.3.0.routes.md)
+  - [3.1 Controller Routes](rdweb.3.0.routes.md#31-controller-routes)
+  - [3.2 Endpoint Routes](rdweb.3.0.routes.md#32-endpoint-routes)
+  - [3.3 Route Parameters](rdweb.3.0.routes.md#33-route-parameters)
+- [4.0 Binding](rdweb.4.0.binding.md)
+  - [4.1 Route Values](rdweb.4.0.binding.md#41-route-values)
+  - [4.2 Query String Values](rdweb.4.0.binding.md#42-query-string-values)
+  - [4.3 Request Body](rdweb.4.0.binding.md#43-request-body)
+- [5.0 Responses](rdweb.5.0.responses.md)
+  - [5.1 Returned Values](rdweb.5.0.responses.md#51-returned-values)
+  - [5.2 Run-time Errors](rdweb.5.0.responses.md#52-run-time-errors)
+  - [5.3 Other Outcomes](rdweb.5.0.responses.md#53-other-outcomes)
 - 6.0 Machines
   - 6.1 The Machine Pool
 - 7.0 Hosting
   - 7.1 Mapping Endpoints
   - 7.2 The RDCore.Web Host
+- [8.0 JSON Values](rdweb.8.0.json-values.md)
+  - [8.1 From VBA to JSON](rdweb.8.0.json-values.md#81-from-vba-to-json)
+  - [8.2 From JSON to VBA](rdweb.8.0.json-values.md#82-from-json-to-vba)
+  - [8.3 Arguments](rdweb.8.0.json-values.md#83-arguments)
 
 |Section|Covers|
 |---|---|
@@ -66,6 +70,7 @@ A section not yet written is listed without a link.
 |5.0|The response each outcome of the procedure answers: a value, no value, a run-time error, and any other outcome.|
 |6.0|The machines that run the procedures, and the pool that gives each request one of its own.|
 |7.0|How an ASP.NET Core application maps the endpoints, and the host that serves the application's pages.|
+|8.0|How a procedure's arguments and returned value convert between VBA and JSON.|
 
 ---
 ## Conventions
