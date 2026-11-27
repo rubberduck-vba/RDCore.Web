@@ -27,15 +27,6 @@ End Function
 `Hello` is the endpoint `GET /api/hello/{name}`. The annotations are comments to VBA, so the module is still a VBA class module.
 
 ---
-## Who it is for
-
-|Reader|What RDCore.Web offers|
-|---|---|
-|A VBA developer|A web API written in VBA, declared with comment annotations, as Rubberduck users write them.|
-|A consultant moving a VBA estate to the web|A path that keeps the VBA code behind any frontend, instead of rewriting it first.|
-|A .NET developer who hosts the application|An ASP.NET Core library: the endpoints are mapped into ASP.NET Core routing, and Kestrel serves them.|
-
----
 ## What works
 
 |Part|Status|

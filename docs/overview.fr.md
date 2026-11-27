@@ -1,7 +1,7 @@
 # Aperçu
 <sup>_This document is available in [English](overview.md)_</sup>
 
-Cette page s'adresse à qui connaît VBA, ASP.NET Core, ou les deux. Elle explique comment s'agencent les parties d'une application RDCore.Web, et renvoie
+Cette page explique comment s'agencent les parties d'une application RDCore.Web, et renvoie
 à la [documentation d'ASP.NET Core](https://learn.microsoft.com/fr-fr/aspnet/core/introduction-to-aspnet-core) de Microsoft pour ce que fait ASP.NET Core.
 La [référence de RDCore.Web](specs/rdweb.md), en anglais, donne les règles de chaque partie.
 

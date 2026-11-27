@@ -1,7 +1,7 @@
 # Overview
 <sup>_Ce document est disponible en [français](overview.fr.md)_</sup>
 
-This page is for a reader who knows VBA, ASP.NET Core, or both. It says how the parts of an RDCore.Web application fit together, and links Microsoft's
+This page says how the parts of an RDCore.Web application fit together, and links Microsoft's
 [ASP.NET Core documentation](https://learn.microsoft.com/aspnet/core/introduction-to-aspnet-core) for what ASP.NET Core does. The
 [RDCore.Web Reference](specs/rdweb.md) has the rules of each part.
 

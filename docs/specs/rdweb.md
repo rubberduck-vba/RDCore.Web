@@ -18,13 +18,13 @@ RD-VBA itself is described by [**RD-VBAL**](https://rubberduck-vba.github.io/RDC
 ---
 ## The site
 
-|Page|Reader|Contents|
-|---|---|---|
-|[Home](../index.md) (English and French)|Anyone|What RDCore.Web is, who it is for, what works, and where to go next.|
-|[Overview](../overview.md) (English and French)|A VBA developer, or a consultant weighing a VBA estate's move to the web|How an annotated class module becomes endpoints behind any frontend, and how that relates to ASP.NET Core and to an Excel or Access project. A table maps each annotation to its ASP.NET Core counterpart.|
-|[Getting Started](../getting-started.md) (English and French)|Same|Build and run the host, write a controller module, and call it. Where it stops: no RD-VBA procedure runs end to end.|
-|This reference (English)|Anyone who writes an application, a person or an agent|Each part's syntax and rules, and the types that implement it.|
-|[API reference](xref:RDCore.Web.Endpoints) (English)|A .NET developer who hosts an application|The public types of RDCore.Web, generated from their xmldocs.|
+|Page|Contents|
+|---|---|
+|[Home](../index.md) (English and French)|What RDCore.Web is, what works, and where to go next.|
+|[Overview](../overview.md) (English and French)|How an annotated class module becomes endpoints behind any frontend, and how that relates to ASP.NET Core and to an Excel or Access project. A table maps each annotation to its ASP.NET Core counterpart.|
+|[Getting Started](../getting-started.md) (English and French)|Build and run the host, write a controller module, and call it. Where it stops: no RD-VBA procedure runs end to end.|
+|This reference (English)|Each part's syntax and rules, and the types that implement it.|
+|[API reference](xref:RDCore.Web.Endpoints) (English)|The public types of RDCore.Web, generated from their xmldocs.|
 
 Where a page relies on ASP.NET Core (routing, model binding, problem details, Kestrel, hosting), it links
 [Microsoft's ASP.NET Core documentation](https://learn.microsoft.com/aspnet/core/) instead of explaining it.
