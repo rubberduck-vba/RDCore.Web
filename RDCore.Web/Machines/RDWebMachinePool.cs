@@ -176,8 +176,8 @@ public sealed class RDWebMachinePool : IAsyncDisposable
     }
 
     /// <summary>
-    /// Disposes the pool: it takes no more requests, and disposes each machine, now when it is idle, or when it ends its request. The program is its owners to
-    /// dispose, once the pool is.
+    /// Disposes the pool: it takes no more requests, and disposes each machine, now when it is idle, or when it ends its request. The pool does not
+    /// dispose the program: its owner does, once the pool is disposed.
     /// </summary>
     /// <returns>A task that completes when the idle machines and the pool's own work have ended.</returns>
     public async ValueTask DisposeAsync()
