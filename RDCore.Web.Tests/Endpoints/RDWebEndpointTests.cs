@@ -95,4 +95,25 @@ public sealed class RDWebEndpointTests
     [TestMethod]
     public void AGet_HasNoBodyParameter()
         => Assert.IsNull(Declare(RDWebAnnotations.HttpGet, "{id}", parameters: ["id", "order"]).BodyParameter);
+
+    private static RDWebEndpoint? DeclareWithBody(string annotation, string bodyParameter)
+        => RDWebEndpoint.FromAnnotation("OrdersController", "api/orders", "PostOrder", ["id", "notify", "order"], annotation, "{id}", bodyParameter);
+
+    [TestMethod]
+    public void ThePostBody_BindsTheParameterFromBodyNames_InTheSpellingOfTheProcedure()
+        => Assert.AreEqual("order", DeclareWithBody(RDWebAnnotations.HttpPost, "ORDER")!.BodyParameter);
+
+    [TestMethod]
+    [DataRow("customer", "is not a parameter")]
+    [DataRow("id", "the route binds it")]
+    public void AFromBodyParameterThePostCannotBind_IsAnEndpointException_NamingIt(string bodyParameter, string why)
+    {
+        var exception = Assert.ThrowsExactly<RDWebEndpointException>(() => DeclareWithBody(RDWebAnnotations.HttpPost, bodyParameter), why);
+
+        StringAssert.Contains(exception.Message, $"'{bodyParameter}'");
+    }
+
+    [TestMethod]
+    public void AGet_BindsNoBody_WhateverFromBodyNames()
+        => Assert.IsNull(DeclareWithBody(RDWebAnnotations.HttpGet, "customer")!.BodyParameter);
 }

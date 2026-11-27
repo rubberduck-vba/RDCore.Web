@@ -85,7 +85,6 @@ A procedure's arguments and value pass as JSON. When a machine answers with the 
 
 |Missing part|What it means|
 |---|---|
-|A reader of a module's annotations|Endpoints are made from each annotation's name and argument, which the code that hosts the application passes in. Nothing reads them from a module's source.|
 |A machine that runs a procedure|No machine runs a procedure in an RDCore runtime session, so no RD-VBA code answers a request.|
 |Endpoints in the host|The host maps none: it serves its page only.|
 

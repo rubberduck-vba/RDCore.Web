@@ -31,15 +31,16 @@ End Function
 
 |Part|Status|
 |---|---|
-|Endpoints from `'@Controller`, `'@HttpGet` and `'@HttpPost`: the HTTP method, and the route under the controller's|Works, from each annotation's name and argument.|
-|Binding: route values and query string values into the parameters of their names, and a `POST` body into a parameter|Works.|
+|Endpoints from `'@Controller`, `'@HttpGet` and `'@HttpPost`: the HTTP method, and the route under the controller's|Works: read from a module's parse.|
+|Binding: route values and query string values into the parameters of their names, and a `POST` body into the parameter `'@FromBody` names|Works.|
+|Diagnostics: a `POST` that names no body parameter, and each further parameter that neither its route nor its body binds|Works in an RDCore platform that loads the RDWeb extension, with a quick fix that adds `'@FromBody`.|
 |Responses: the procedure's value as JSON, no value, a run-time error as a problem details body|Works.|
 |A pool of machines, each running one request at a time|Works.|
 |The host: a page that calls an endpoint and shows its answer|Works. The host maps no endpoint.|
 
 > [!NOTE]
-> **Not implemented.** No machine runs a procedure in an RDCore runtime session, and nothing reads the annotations from a module's source. An endpoint's
-> request reaches a machine, but no RD-VBA code answers it.
+> **Not implemented.** No machine runs a procedure in an RDCore runtime session, and the host reads no module. An endpoint's request reaches a machine,
+> but no RD-VBA code answers it.
 
 ---
 ## Where to go next

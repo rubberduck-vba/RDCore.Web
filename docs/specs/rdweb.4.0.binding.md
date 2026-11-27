@@ -56,7 +56,8 @@ The body of a `POST` request, of a JSON media type: `application/json`, or a typ
 
 ### Static Semantics
 
-Only a `POST` endpoint with a body parameter reads a body: the first parameter its route does not bind ([§2.3](rdweb.2.0.annotations.md#23-httppost)).
+Only a `POST` endpoint with a body parameter reads a body: the parameter `'@FromBody` names ([§2.4](rdweb.2.0.annotations.md#24-frombody)), else the
+first parameter its route does not bind ([§2.3](rdweb.2.0.annotations.md#23-httppost)).
 
 ### Runtime Semantics
 

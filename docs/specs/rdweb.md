@@ -39,6 +39,7 @@ A section not yet written is listed without a link.
   - [2.1 `'@Controller`](rdweb.2.0.annotations.md#21-controller)
   - [2.2 `'@HttpGet`](rdweb.2.0.annotations.md#22-httpget)
   - [2.3 `'@HttpPost`](rdweb.2.0.annotations.md#23-httppost)
+  - [2.4 `'@FromBody`](rdweb.2.0.annotations.md#24-frombody)
 - [3.0 Routes](rdweb.3.0.routes.md)
   - [3.1 Controller Routes](rdweb.3.0.routes.md#31-controller-routes)
   - [3.2 Endpoint Routes](rdweb.3.0.routes.md#32-endpoint-routes)
