@@ -17,13 +17,19 @@ namespace RDCore.Web.Tests.Hosting;
 [TestClass]
 public sealed class RDWebEndpointsHostingTests
 {
+    private static readonly RDWebMachinePoolOptions OneMachine = new() { MinMachines = 1, MaxMachines = 1 };
+
     public TestContext TestContext { get; set; } = null!;
 
     private static RDWebEndpoint Endpoint(string annotation, string route, params string[] parameters)
         => RDWebEndpoint.FromAnnotation("OrdersController", "api/orders", "Serve", parameters, annotation, route)!;
 
-    private Task<RunningApplication> StartAsync(IRDWebMachine machine, params RDWebEndpoint[] endpoints)
-        => RunningApplication.StartAsync(app => app.MapRDWebEndpoints(endpoints, machine), TestContext.CancellationToken);
+    // a pool of the one machine, which the test disposes after its application.
+    private Task<RDWebMachinePool> PoolOfAsync(ScriptedMachine machine)
+        => RDWebMachinePool.StartAsync(new ScriptedProgram(() => machine), OneMachine, TestContext.CancellationToken);
+
+    private Task<RunningApplication> StartAsync(RDWebMachinePool pool, params RDWebEndpoint[] endpoints)
+        => RunningApplication.StartAsync(app => app.MapRDWebEndpoints(endpoints, pool), TestContext.CancellationToken);
 
     private static StringContent Json(string json) => new(json, Encoding.UTF8, "application/json");
 
@@ -31,8 +37,9 @@ public sealed class RDWebEndpointsHostingTests
     public async Task TheValueAProcedureReturns_IsTheJsonBodyOfTheResponse()
     {
         // what a Scripting.Dictionary of a name and a count is as JSON.
-        var machine = new ScriptedMachine(_ => RDWebInvocationResult.Returned(new JsonObject { ["name"] = "Duck", ["count"] = 42 }));
-        await using var app = await StartAsync(machine, Endpoint(RDWebAnnotations.HttpGet, "summary"));
+        var machine = new ScriptedMachine(_ => ProgramInvocationResult.Returned(new JsonObject { ["name"] = "Duck", ["count"] = 42 }));
+        await using var pool = await PoolOfAsync(machine);
+        await using var app = await StartAsync(pool, Endpoint(RDWebAnnotations.HttpGet, "summary"));
 
         using var response = await app.Client.GetAsync("api/orders/summary", TestContext.CancellationToken);
 
@@ -42,14 +49,15 @@ public sealed class RDWebEndpointsHostingTests
         Assert.AreEqual("Duck", (string?)body?["name"]);
         Assert.AreEqual(42, (int?)body?["count"]);
         var invocation = machine.Invocations.Single();
-        Assert.AreEqual("OrdersController", invocation.ModuleName);
-        Assert.AreEqual("Serve", invocation.ProcedureName);
+        Assert.AreEqual("OrdersController", invocation.Module);
+        Assert.AreEqual("Serve", invocation.Procedure);
     }
 
     [TestMethod]
     public async Task AProcedureThatReturnsNull_AnswersJsonNull()
     {
-        await using var app = await StartAsync(new ScriptedMachine(_ => RDWebInvocationResult.Returned(null)), Endpoint(RDWebAnnotations.HttpGet, "none"));
+        await using var pool = await PoolOfAsync(new ScriptedMachine(_ => ProgramInvocationResult.Returned(null)));
+        await using var app = await StartAsync(pool, Endpoint(RDWebAnnotations.HttpGet, "none"));
 
         using var response = await app.Client.GetAsync("api/orders/none", TestContext.CancellationToken);
 
@@ -60,7 +68,8 @@ public sealed class RDWebEndpointsHostingTests
     [TestMethod]
     public async Task AProcedureThatReturnsNoValue_AnswersNoContent()
     {
-        await using var app = await StartAsync(new ScriptedMachine(_ => RDWebInvocationResult.Completed()), Endpoint(RDWebAnnotations.HttpPost, "ping"));
+        await using var pool = await PoolOfAsync(new ScriptedMachine(_ => ProgramInvocationResult.Completed()));
+        await using var app = await StartAsync(pool, Endpoint(RDWebAnnotations.HttpPost, "ping"));
 
         using var response = await app.Client.PostAsync("api/orders/ping", null, TestContext.CancellationToken);
 
@@ -70,8 +79,9 @@ public sealed class RDWebEndpointsHostingTests
     [TestMethod]
     public async Task TheRouteValues_BindTheirParameters_AsStrings()
     {
-        var machine = new ScriptedMachine(_ => RDWebInvocationResult.Completed());
-        await using var app = await StartAsync(machine, Endpoint(RDWebAnnotations.HttpGet, "{id}/lines/{line}", "id", "line"));
+        var machine = new ScriptedMachine(_ => ProgramInvocationResult.Completed());
+        await using var pool = await PoolOfAsync(machine);
+        await using var app = await StartAsync(pool, Endpoint(RDWebAnnotations.HttpGet, "{id}/lines/{line}", "id", "line"));
 
         using var response = await app.Client.GetAsync("api/orders/42/lines/A%20B", TestContext.CancellationToken);
 
@@ -85,8 +95,9 @@ public sealed class RDWebEndpointsHostingTests
     [TestMethod]
     public async Task AQueryStringValue_BindsTheParameterOfItsName_AndAParameterNothingBinds_GetsNoArgument()
     {
-        var machine = new ScriptedMachine(_ => RDWebInvocationResult.Completed());
-        await using var app = await StartAsync(machine, Endpoint(RDWebAnnotations.HttpGet, "{id}", "id", "format", "culture"));
+        var machine = new ScriptedMachine(_ => ProgramInvocationResult.Completed());
+        await using var pool = await PoolOfAsync(machine);
+        await using var app = await StartAsync(pool, Endpoint(RDWebAnnotations.HttpGet, "{id}", "id", "format", "culture"));
 
         using var response = await app.Client.GetAsync("api/orders/7?format=short&other=1", TestContext.CancellationToken);
 
@@ -100,8 +111,9 @@ public sealed class RDWebEndpointsHostingTests
     [TestMethod]
     public async Task APostedJsonBody_BindsTheBodyParameter_AsTheJsonItHolds()
     {
-        var machine = new ScriptedMachine(_ => RDWebInvocationResult.Returned(JsonValue.Create(1)));
-        await using var app = await StartAsync(machine, Endpoint(RDWebAnnotations.HttpPost, "{id}/lines", "id", "line"));
+        var machine = new ScriptedMachine(_ => ProgramInvocationResult.Returned(JsonValue.Create(1)));
+        await using var pool = await PoolOfAsync(machine);
+        await using var app = await StartAsync(pool, Endpoint(RDWebAnnotations.HttpPost, "{id}/lines", "id", "line"));
 
         var posted = Json("""{ "item": "duck", "quantity": 3, "gift": true }""");
         using var response = await app.Client.PostAsync("api/orders/7/lines", posted, TestContext.CancellationToken);
@@ -118,8 +130,9 @@ public sealed class RDWebEndpointsHostingTests
     [TestMethod]
     public async Task APostedBodyThatIsNotValidJson_AnswersBadRequest_AndRunsNothing()
     {
-        var machine = new ScriptedMachine(_ => RDWebInvocationResult.Completed());
-        await using var app = await StartAsync(machine, Endpoint(RDWebAnnotations.HttpPost, "lines", "line"));
+        var machine = new ScriptedMachine(_ => ProgramInvocationResult.Completed());
+        await using var pool = await PoolOfAsync(machine);
+        await using var app = await StartAsync(pool, Endpoint(RDWebAnnotations.HttpPost, "lines", "line"));
 
         using var response = await app.Client.PostAsync("api/orders/lines", Json("{ \"item\": "), TestContext.CancellationToken);
 
@@ -131,8 +144,9 @@ public sealed class RDWebEndpointsHostingTests
     [TestMethod]
     public async Task APostedBodyThatIsNotJson_AnswersUnsupportedMediaType_AndRunsNothing()
     {
-        var machine = new ScriptedMachine(_ => RDWebInvocationResult.Completed());
-        await using var app = await StartAsync(machine, Endpoint(RDWebAnnotations.HttpPost, "lines", "line"));
+        var machine = new ScriptedMachine(_ => ProgramInvocationResult.Completed());
+        await using var pool = await PoolOfAsync(machine);
+        await using var app = await StartAsync(pool, Endpoint(RDWebAnnotations.HttpPost, "lines", "line"));
 
         var text = new StringContent("item=duck", Encoding.UTF8, "text/plain");
         using var response = await app.Client.PostAsync("api/orders/lines", text, TestContext.CancellationToken);
@@ -144,8 +158,9 @@ public sealed class RDWebEndpointsHostingTests
     [TestMethod]
     public async Task ARunTimeError_AnswersInternalServerError_WithTheErrorsNumberAndCode()
     {
-        var machine = new ScriptedMachine(_ => RDWebInvocationResult.RuntimeError(11, "Division by zero", "VBR00011"));
-        await using var app = await StartAsync(machine, Endpoint(RDWebAnnotations.HttpGet, "ratio"));
+        var machine = new ScriptedMachine(_ => ProgramInvocationResult.RuntimeError(11, "Division by zero", "VBR00011"));
+        await using var pool = await PoolOfAsync(machine);
+        await using var app = await StartAsync(pool, Endpoint(RDWebAnnotations.HttpGet, "ratio"));
 
         using var response = await app.Client.GetAsync("api/orders/ratio", TestContext.CancellationToken);
 
@@ -161,8 +176,9 @@ public sealed class RDWebEndpointsHostingTests
     [TestMethod]
     public async Task AMachineThatRefusesTheRequest_AnswersServiceUnavailable()
     {
-        var machine = new ScriptedMachine(_ => RDWebInvocationResult.Ended(ExecutionOutcome.Refused, "A program is running."));
-        await using var app = await StartAsync(machine, Endpoint(RDWebAnnotations.HttpGet, "busy"));
+        var machine = new ScriptedMachine(_ => ProgramInvocationResult.Ended(ExecutionOutcome.Refused, "A program is running."));
+        await using var pool = await PoolOfAsync(machine);
+        await using var app = await StartAsync(pool, Endpoint(RDWebAnnotations.HttpGet, "busy"));
 
         using var response = await app.Client.GetAsync("api/orders/busy", TestContext.CancellationToken);
 
@@ -175,8 +191,9 @@ public sealed class RDWebEndpointsHostingTests
     [DataRow(ExecutionOutcome.NotImplemented)]
     public async Task AProcedureThatDoesNotComplete_AnswersInternalServerError(ExecutionOutcome outcome)
     {
-        var machine = new ScriptedMachine(_ => RDWebInvocationResult.Ended(outcome, "It ended."));
-        await using var app = await StartAsync(machine, Endpoint(RDWebAnnotations.HttpGet, "ended"));
+        var machine = new ScriptedMachine(_ => ProgramInvocationResult.Ended(outcome, "It ended."));
+        await using var pool = await PoolOfAsync(machine);
+        await using var app = await StartAsync(pool, Endpoint(RDWebAnnotations.HttpGet, "ended"));
 
         using var response = await app.Client.GetAsync("api/orders/ended", TestContext.CancellationToken);
 
@@ -187,8 +204,9 @@ public sealed class RDWebEndpointsHostingTests
     [TestMethod]
     public async Task AnEndpoint_ServesOnlyItsOwnMethod()
     {
-        var machine = new ScriptedMachine(_ => RDWebInvocationResult.Completed());
-        await using var app = await StartAsync(machine, Endpoint(RDWebAnnotations.HttpGet, "summary"));
+        var machine = new ScriptedMachine(_ => ProgramInvocationResult.Completed());
+        await using var pool = await PoolOfAsync(machine);
+        await using var app = await StartAsync(pool, Endpoint(RDWebAnnotations.HttpGet, "summary"));
 
         using var response = await app.Client.PostAsync("api/orders/summary", Json("{}"), TestContext.CancellationToken);
 
@@ -200,9 +218,8 @@ public sealed class RDWebEndpointsHostingTests
     public async Task ThroughAPoolOfOneMachine_EveryRequestIsServed()
     {
         var calls = 0;
-        var machine = new ScriptedMachine(_ => RDWebInvocationResult.Returned(JsonValue.Create(Interlocked.Increment(ref calls))));
-        await using var pool = await RDWebMachinePool.StartAsync(_ => Task.FromResult<IRDWebPooledMachine>(machine),
-            new RDWebMachinePoolOptions { MinMachines = 1, MaxMachines = 1 }, TestContext.CancellationToken);
+        var machine = new ScriptedMachine(_ => ProgramInvocationResult.Returned(JsonValue.Create(Interlocked.Increment(ref calls))));
+        await using var pool = await PoolOfAsync(machine);
         await using var app = await StartAsync(pool, Endpoint(RDWebAnnotations.HttpGet, "next"));
 
         var answers = await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => app.Client.GetStringAsync("api/orders/next", TestContext.CancellationToken)));

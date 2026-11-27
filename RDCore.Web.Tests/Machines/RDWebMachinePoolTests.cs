@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Time.Testing;
 using RDCore.SDK.Platform.Protocol;
+using RDCore.SDK.Runtime.Hosting;
 using RDCore.Web.Machines;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
@@ -16,28 +17,13 @@ namespace RDCore.Web.Tests.Machines;
 [TestClass]
 public sealed class RDWebMachinePoolTests
 {
-    private static readonly RDWebInvocation Invocation = new("OrdersController", "GetOrder", ImmutableDictionary<string, JsonNode?>.Empty);
+    private static readonly ProgramInvocation Invocation = new("OrdersController", "GetOrder", ImmutableDictionary<string, JsonNode?>.Empty);
 
     private static readonly RDWebMachinePoolOptions OneMachine = new() { MinMachines = 1, MaxMachines = 1 };
 
     public TestContext TestContext { get; set; } = null!;
 
     private CancellationToken Token => TestContext.CancellationToken;
-
-    // the machines a pool makes, in the order it makes them.
-    private sealed class Maker(Func<ScriptedMachine> make)
-    {
-        public ConcurrentQueue<ScriptedMachine> Made { get; } = new();
-
-        public ScriptedMachine this[int index] => Made.ElementAt(index);
-
-        public Task<IRDWebPooledMachine> CreateAsync(CancellationToken cancellationToken)
-        {
-            var machine = make();
-            Made.Enqueue(machine);
-            return Task.FromResult<IRDWebPooledMachine>(machine);
-        }
-    }
 
     // a machine that says when an invocation enters it, and holds it until the test releases it. One that stops when cancelled answers Interrupted; one
     // that does not stop keeps holding.
@@ -55,11 +41,11 @@ public sealed class RDWebMachinePoolTests
                 try
                 {
                     await (stopsWhenCancelled ? Release.Task.WaitAsync(token) : Release.Task);
-                    return RDWebInvocationResult.Completed();
+                    return ProgramInvocationResult.Completed();
                 }
                 catch (OperationCanceledException)
                 {
-                    return RDWebInvocationResult.Ended(ExecutionOutcome.Interrupted, "Interrupted.");
+                    return ProgramInvocationResult.Ended(ExecutionOutcome.Interrupted, "Interrupted.");
                 }
                 finally
                 {
@@ -78,20 +64,20 @@ public sealed class RDWebMachinePoolTests
         public int MostAtOnce { get; private set; }
     }
 
-    private static ScriptedMachine Answering(RDWebInvocationResult result) => new(_ => result);
+    private static ScriptedMachine Answering(ProgramInvocationResult result) => new(_ => result);
 
     // a request to the pool, which the test's own hang guard (its token) ends if a broken pool never answers it.
-    private Task<RDWebInvocationResult> InvokeAsync(RDWebMachinePool pool) => pool.InvokeAsync(Invocation, Token).WaitAsync(Token);
+    private Task<ProgramInvocationResult> InvokeAsync(RDWebMachinePool pool) => pool.InvokeAsync(Invocation, Token).WaitAsync(Token);
 
-    private Task<RDWebMachinePool> StartAsync(Maker maker, RDWebMachinePoolOptions options, TimeProvider? time = null)
-        => RDWebMachinePool.StartAsync(maker.CreateAsync, options, Token, time);
+    private Task<RDWebMachinePool> StartAsync(ScriptedProgram maker, RDWebMachinePoolOptions options, TimeProvider? time = null)
+        => RDWebMachinePool.StartAsync(maker, options, Token, time);
 
     [TestMethod]
     [Timeout(600_000, CooperativeCancellation = true)]
     public async Task APoolOfOneMachine_RunsASecondRequestOnlyOnceTheFirstHasReturned()
     {
         var held = new HeldMachine();
-        await using var pool = await StartAsync(new Maker(() => held.Machine), OneMachine);
+        await using var pool = await StartAsync(new ScriptedProgram(() => held.Machine), OneMachine);
 
         var first = InvokeAsync(pool);
         await held.Entered.Reader.ReadAsync(Token);
@@ -111,7 +97,7 @@ public sealed class RDWebMachinePoolTests
     {
         var held = new ConcurrentQueue<HeldMachine>();
         var entered = Channel.CreateUnbounded<bool>();
-        await using var pool = await StartAsync(new Maker(() =>
+        await using var pool = await StartAsync(new ScriptedProgram(() =>
         {
             var machine = new HeldMachine(entered: entered);
             held.Enqueue(machine);
@@ -138,7 +124,7 @@ public sealed class RDWebMachinePoolTests
     {
         var held = new ConcurrentQueue<HeldMachine>();
         var entered = Channel.CreateUnbounded<bool>();
-        var maker = new Maker(() =>
+        var maker = new ScriptedProgram(() =>
         {
             var machine = new HeldMachine(entered: entered);
             held.Enqueue(machine);
@@ -167,7 +153,7 @@ public sealed class RDWebMachinePoolTests
     public async Task ARequestCancelledWhileItWaits_DoesNotRun_AndTheMachineServesTheNextOne()
     {
         var held = new HeldMachine();
-        await using var pool = await StartAsync(new Maker(() => held.Machine), OneMachine);
+        await using var pool = await StartAsync(new ScriptedProgram(() => held.Machine), OneMachine);
         var first = InvokeAsync(pool);
         await held.Entered.Reader.ReadAsync(Token);
 
@@ -190,7 +176,7 @@ public sealed class RDWebMachinePoolTests
         var machine = new ScriptedMachine(_ =>
         {
             log.Enqueue("invoke");
-            return RDWebInvocationResult.Completed();
+            return ProgramInvocationResult.Completed();
         })
         {
             Reset = _ =>
@@ -199,7 +185,7 @@ public sealed class RDWebMachinePoolTests
                 return Task.FromResult(true);
             },
         };
-        await using var pool = await StartAsync(new Maker(() => machine), OneMachine);
+        await using var pool = await StartAsync(new ScriptedProgram(() => machine), OneMachine);
 
         await InvokeAsync(pool);
         await InvokeAsync(pool);
@@ -215,7 +201,7 @@ public sealed class RDWebMachinePoolTests
     [DataRow(ExecutionOutcome.NotFound)]
     public async Task AMachineWhoseRequestEndedNormally_IsResetAndServesTheNextOne(ExecutionOutcome outcome)
     {
-        var maker = new Maker(() => Answering(ResultOf(outcome)));
+        var maker = new ScriptedProgram(() => Answering(ResultOf(outcome)));
         await using var pool = await StartAsync(maker, OneMachine);
 
         await InvokeAsync(pool);
@@ -233,7 +219,7 @@ public sealed class RDWebMachinePoolTests
     [DataRow(ExecutionOutcome.Refused)]
     public async Task AMachineWhoseRequestDidNotEnd_IsRecycled_AndAnotherServesTheNextOne(ExecutionOutcome outcome)
     {
-        var maker = new Maker(() => Answering(ResultOf(outcome)));
+        var maker = new ScriptedProgram(() => Answering(ResultOf(outcome)));
         await using var pool = await StartAsync(maker, OneMachine);
 
         await InvokeAsync(pool);
@@ -251,8 +237,8 @@ public sealed class RDWebMachinePoolTests
     public async Task AMachineWhoseInvocationThrows_IsRecycled_AndAnotherServesTheNextOne()
     {
         var calls = 0;
-        var maker = new Maker(() => new ScriptedMachine(_ =>
-            Interlocked.Increment(ref calls) == 1 ? throw new InvalidOperationException("the session failed") : RDWebInvocationResult.Completed()));
+        var maker = new ScriptedProgram(() => new ScriptedMachine(_ =>
+            Interlocked.Increment(ref calls) == 1 ? throw new InvalidOperationException("the session failed") : ProgramInvocationResult.Completed()));
         await using var pool = await StartAsync(maker, OneMachine);
 
         await Assert.ThrowsExactlyAsync<InvalidOperationException>(() => InvokeAsync(pool));
@@ -268,7 +254,7 @@ public sealed class RDWebMachinePoolTests
     [Timeout(600_000, CooperativeCancellation = true)]
     public async Task AMachine_IsRecycledOnceItHasServedRecycleAfterRequests()
     {
-        var maker = new Maker(() => Answering(RDWebInvocationResult.Completed()));
+        var maker = new ScriptedProgram(() => Answering(ProgramInvocationResult.Completed()));
         await using var pool = await StartAsync(maker, OneMachine with { RecycleAfter = 2 });
 
         for (var request = 0; request < 3; request++)
@@ -289,7 +275,7 @@ public sealed class RDWebMachinePoolTests
     [DataRow(true)]
     public async Task AMachineWhoseResetDoesNotComplete_IsRecycled(bool resetThrows)
     {
-        var maker = new Maker(() => new ScriptedMachine(_ => RDWebInvocationResult.Completed())
+        var maker = new ScriptedProgram(() => new ScriptedMachine(_ => ProgramInvocationResult.Completed())
         {
             Reset = _ => resetThrows ? Task.FromException<bool>(new InvalidOperationException("Terminate failed")) : Task.FromResult(false),
         });
@@ -313,7 +299,7 @@ public sealed class RDWebMachinePoolTests
         var resetting = Channel.CreateUnbounded<CancellationToken>();
         var stuck = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var resets = 0;
-        var maker = new Maker(() => new ScriptedMachine(_ => RDWebInvocationResult.Completed())
+        var maker = new ScriptedProgram(() => new ScriptedMachine(_ => ProgramInvocationResult.Completed())
         {
             Reset = token =>
             {
@@ -356,7 +342,7 @@ public sealed class RDWebMachinePoolTests
     {
         var time = new FakeTimeProvider();
         var held = new ConcurrentQueue<HeldMachine>();
-        var maker = new Maker(() =>
+        var maker = new ScriptedProgram(() =>
         {
             var machine = new HeldMachine();
             held.Enqueue(machine);
@@ -380,7 +366,7 @@ public sealed class RDWebMachinePoolTests
         var time = new FakeTimeProvider();
         var stuck = new HeldMachine(stopsWhenCancelled: false);
         var made = 0;
-        var maker = new Maker(() => Interlocked.Increment(ref made) == 1 ? stuck.Machine : Answering(RDWebInvocationResult.Completed()));
+        var maker = new ScriptedProgram(() => Interlocked.Increment(ref made) == 1 ? stuck.Machine : Answering(ProgramInvocationResult.Completed()));
         await using var pool = await StartAsync(maker, OneMachine, time);
 
         var request = InvokeAsync(pool);
@@ -403,7 +389,7 @@ public sealed class RDWebMachinePoolTests
     {
         var time = new FakeTimeProvider();
         var held = new HeldMachine(stopsWhenCancelled: false);
-        await using var pool = await StartAsync(new Maker(() => held.Machine), OneMachine, time);
+        await using var pool = await StartAsync(new ScriptedProgram(() => held.Machine), OneMachine, time);
         var first = InvokeAsync(pool);
         await held.Entered.Reader.ReadAsync(Token);
 
@@ -421,9 +407,9 @@ public sealed class RDWebMachinePoolTests
     public async Task DisposingThePool_DisposesItsIdleMachines_AndOneServingARequestOnceItEnds()
     {
         var held = new HeldMachine();
-        var idle = Answering(RDWebInvocationResult.Completed());
+        var idle = Answering(ProgramInvocationResult.Completed());
         var made = 0;
-        var pool = await StartAsync(new Maker(() => Interlocked.Increment(ref made) == 1 ? held.Machine : idle),
+        var pool = await StartAsync(new ScriptedProgram(() => Interlocked.Increment(ref made) == 1 ? held.Machine : idle),
             new RDWebMachinePoolOptions { MinMachines = 2, MaxMachines = 2 });
         var request = InvokeAsync(pool);
         await held.Entered.Reader.ReadAsync(Token);
@@ -444,7 +430,8 @@ public sealed class RDWebMachinePoolTests
     [DataRow(2, 1)]
     public async Task APoolOfAnInvalidSize_IsRefused(int min, int max)
         => await Assert.ThrowsExactlyAsync<ArgumentOutOfRangeException>(() =>
-            StartAsync(new Maker(() => Answering(RDWebInvocationResult.Completed())), new RDWebMachinePoolOptions { MinMachines = min, MaxMachines = max }));
+            StartAsync(new ScriptedProgram(() => Answering(ProgramInvocationResult.Completed())),
+                new RDWebMachinePoolOptions { MinMachines = min, MaxMachines = max }));
 
     [TestMethod]
     [DataRow(nameof(RDWebMachinePoolOptions.RecycleAfter))]
@@ -461,13 +448,14 @@ public sealed class RDWebMachinePoolTests
             _ => OneMachine with { ResetTimeout = TimeSpan.Zero },
         };
 
-        await Assert.ThrowsExactlyAsync<ArgumentOutOfRangeException>(() => StartAsync(new Maker(() => Answering(RDWebInvocationResult.Completed())), options));
+        await Assert.ThrowsExactlyAsync<ArgumentOutOfRangeException>(() =>
+            StartAsync(new ScriptedProgram(() => Answering(ProgramInvocationResult.Completed())), options));
     }
 
-    private static RDWebInvocationResult ResultOf(ExecutionOutcome outcome) => outcome switch
+    private static ProgramInvocationResult ResultOf(ExecutionOutcome outcome) => outcome switch
     {
-        ExecutionOutcome.Completed => RDWebInvocationResult.Completed(),
-        ExecutionOutcome.RuntimeError => RDWebInvocationResult.RuntimeError(11, "Division by zero", "VBR00011"),
-        _ => RDWebInvocationResult.Ended(outcome, "It ended."),
+        ExecutionOutcome.Completed => ProgramInvocationResult.Completed(),
+        ExecutionOutcome.RuntimeError => ProgramInvocationResult.RuntimeError(11, "Division by zero", "VBR00011"),
+        _ => ProgramInvocationResult.Ended(outcome, "It ended."),
     };
 }

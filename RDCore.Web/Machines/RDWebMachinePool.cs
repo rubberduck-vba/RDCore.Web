@@ -1,4 +1,5 @@
 using RDCore.SDK.Platform.Protocol;
+using RDCore.SDK.Runtime.Hosting;
 using System.Collections.Concurrent;
 using System.Threading.Channels;
 
@@ -21,9 +22,9 @@ namespace RDCore.Web.Machines;
 /// one if it ever ends.</item>
 /// </list>
 /// </remarks>
-public sealed class RDWebMachinePool : IRDWebMachine, IAsyncDisposable
+public sealed class RDWebMachinePool : IAsyncDisposable
 {
-    private readonly Func<CancellationToken, Task<IRDWebPooledMachine>> _create;
+    private readonly Func<CancellationToken, Task<IProgramMachine>> _create;
     private readonly RDWebMachinePoolOptions _options;
     private readonly TimeProvider _time;
     private readonly Channel<Pooled> _idle = Channel.CreateUnbounded<Pooled>();
@@ -33,7 +34,7 @@ public sealed class RDWebMachinePool : IRDWebMachine, IAsyncDisposable
     private int _abandoned;
     private bool _disposed;
 
-    private RDWebMachinePool(Func<CancellationToken, Task<IRDWebPooledMachine>> create, RDWebMachinePoolOptions options, TimeProvider time)
+    private RDWebMachinePool(Func<CancellationToken, Task<IProgramMachine>> create, RDWebMachinePoolOptions options, TimeProvider time)
     {
         _create = create;
         _options = options;
@@ -41,9 +42,9 @@ public sealed class RDWebMachinePool : IRDWebMachine, IAsyncDisposable
     }
 
     // a machine of the pool, and how many requests it served: only the request or the return that holds the machine reads or writes it.
-    private sealed class Pooled(IRDWebPooledMachine machine)
+    private sealed class Pooled(IProgramMachine machine)
     {
-        public IRDWebPooledMachine Machine { get; } = machine;
+        public IProgramMachine Machine { get; } = machine;
 
         public int Served { get; set; }
     }
@@ -70,7 +71,7 @@ public sealed class RDWebMachinePool : IRDWebMachine, IAsyncDisposable
     /// <summary>
     /// Starts a pool: it makes its <see cref="RDWebMachinePoolOptions.MinMachines"/> machines, all of them idle.
     /// </summary>
-    /// <param name="create">Makes a machine of the program: a session of its own.</param>
+    /// <param name="program">The program whose machines the pool makes, each a session of its own. The pool does not dispose it.</param>
     /// <param name="options">The pool's size and limits.</param>
     /// <param name="cancellationToken">Cancels the start.</param>
     /// <param name="timeProvider">The clock of the pool's deadlines; <see cref="TimeProvider.System"/> by default.</param>
@@ -79,10 +80,10 @@ public sealed class RDWebMachinePool : IRDWebMachine, IAsyncDisposable
     /// <see cref="RDWebMachinePoolOptions.MaxMachines"/> is less than 1, <see cref="RDWebMachinePoolOptions.MinMachines"/> is negative or more than the
     /// maximum, <see cref="RDWebMachinePoolOptions.RecycleAfter"/> is less than 1, or a timeout is not positive.
     /// </exception>
-    public static async Task<RDWebMachinePool> StartAsync(Func<CancellationToken, Task<IRDWebPooledMachine>> create, RDWebMachinePoolOptions options,
+    public static async Task<RDWebMachinePool> StartAsync(IComposedProgram program, RDWebMachinePoolOptions options,
         CancellationToken cancellationToken, TimeProvider? timeProvider = null)
     {
-        ArgumentNullException.ThrowIfNull(create);
+        ArgumentNullException.ThrowIfNull(program);
         ArgumentNullException.ThrowIfNull(options);
         if (options.MaxMachines < 1 || options.MinMachines < 0 || options.MinMachines > options.MaxMachines)
         {
@@ -95,13 +96,13 @@ public sealed class RDWebMachinePool : IRDWebMachine, IAsyncDisposable
             throw new ArgumentOutOfRangeException(nameof(options), options, RDWebResources.Pool_InvalidLimit);
         }
 
-        var pool = new RDWebMachinePool(create, options, timeProvider ?? TimeProvider.System);
+        var pool = new RDWebMachinePool(token => program.CreateMachineAsync(token).AsTask(), options, timeProvider ?? TimeProvider.System);
         try
         {
             for (var made = 0; made < options.MinMachines; made++)
             {
                 pool._size++;
-                pool._idle.Writer.TryWrite(new Pooled(await create(cancellationToken).ConfigureAwait(false)));
+                pool._idle.Writer.TryWrite(new Pooled(await program.CreateMachineAsync(cancellationToken).ConfigureAwait(false)));
             }
         }
         catch
@@ -124,7 +125,7 @@ public sealed class RDWebMachinePool : IRDWebMachine, IAsyncDisposable
     /// </returns>
     /// <exception cref="OperationCanceledException"><paramref name="cancellationToken"/> was cancelled before a machine was idle.</exception>
     /// <exception cref="ObjectDisposedException">The pool is disposed.</exception>
-    public async Task<RDWebInvocationResult> InvokeAsync(RDWebInvocation invocation, CancellationToken cancellationToken)
+    public async Task<ProgramInvocationResult> InvokeAsync(ProgramInvocation invocation, CancellationToken cancellationToken)
     {
         // every deadline of the request is set before anything waits, so that each one runs from the request's arrival.
         using var deadline = new CancellationTokenSource(_options.RequestTimeout, _time);
@@ -140,7 +141,7 @@ public sealed class RDWebMachinePool : IRDWebMachine, IAsyncDisposable
             }
             catch (OperationCanceledException) when (deadline.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
             {
-                return RDWebInvocationResult.Ended(ExecutionOutcome.Refused, RDWebResources.Pool_NoMachineInTime);
+                return ProgramInvocationResult.Ended(ExecutionOutcome.Refused, RDWebResources.Pool_NoMachineInTime);
             }
 
             var invoking = InvokeOnAsync(pooled.Machine, invocation, request.Token);
@@ -148,10 +149,10 @@ public sealed class RDWebMachinePool : IRDWebMachine, IAsyncDisposable
             {
                 Abandon(pooled, invoking);
                 cancellationToken.ThrowIfCancellationRequested();
-                return RDWebInvocationResult.Ended(ExecutionOutcome.Interrupted, RDWebResources.Pool_MachineDidNotStop);
+                return ProgramInvocationResult.Ended(ExecutionOutcome.Interrupted, RDWebResources.Pool_MachineDidNotStop);
             }
 
-            RDWebInvocationResult result;
+            ProgramInvocationResult result;
             try
             {
                 result = await invoking.ConfigureAwait(false);
@@ -175,7 +176,8 @@ public sealed class RDWebMachinePool : IRDWebMachine, IAsyncDisposable
     }
 
     /// <summary>
-    /// Disposes the pool: it takes no more requests, and disposes each machine, now when it is idle, or when it ends its request.
+    /// Disposes the pool: it takes no more requests, and disposes each machine, now when it is idle, or when it ends its request. The program is its owners to
+    /// dispose, once the pool is.
     /// </summary>
     /// <returns>A task that completes when the idle machines and the pool's own work have ended.</returns>
     public async ValueTask DisposeAsync()
@@ -244,10 +246,10 @@ public sealed class RDWebMachinePool : IRDWebMachine, IAsyncDisposable
     }
 
     // a machine that throws as it is called is a machine whose invocation threw.
-    private static async Task<RDWebInvocationResult> InvokeOnAsync(IRDWebPooledMachine machine, RDWebInvocation invocation, CancellationToken token)
+    private static async Task<ProgramInvocationResult> InvokeOnAsync(IProgramMachine machine, ProgramInvocation invocation, CancellationToken token)
         => await machine.InvokeAsync(invocation, token).ConfigureAwait(false);
 
-    private static async Task<bool> ResetOnAsync(IRDWebPooledMachine machine, CancellationToken token)
+    private static async Task<bool> ResetOnAsync(IProgramMachine machine, CancellationToken token)
         => await machine.ResetAsync(token).ConfigureAwait(false);
 
     private async Task ReturnAsync(Pooled pooled, bool reusable)
@@ -350,7 +352,7 @@ public sealed class RDWebMachinePool : IRDWebMachine, IAsyncDisposable
             TaskScheduler.Default);
     }
 
-    private static async Task DisposeOnceEndedAsync(IRDWebPooledMachine machine, Task pending)
+    private static async Task DisposeOnceEndedAsync(IProgramMachine machine, Task pending)
     {
         try
         {
@@ -365,7 +367,7 @@ public sealed class RDWebMachinePool : IRDWebMachine, IAsyncDisposable
     }
 
     // a machine that fails as it is disposed is gone all the same: nothing of it is used again.
-    private static async Task DisposeQuietlyAsync(IRDWebPooledMachine machine)
+    private static async Task DisposeQuietlyAsync(IProgramMachine machine)
     {
         try
         {
