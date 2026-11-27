@@ -1,5 +1,3 @@
-- name: Diagnostics
-  href: diagnostics/toc.yml
 - name: RDCore
   href: https://rubberduck-vba.github.io/RDCore/
 - name: SDK

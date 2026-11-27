@@ -7,10 +7,6 @@
 
 Le code source, son état et la façon de le construire se trouvent dans le [dépôt RDCore.Web](https://github.com/rubberduck-vba/RDCore.Web).
 
-## Diagnostics
-
-RDCore.Web émet ses propres diagnostics, sous le préfixe `RDW`. Chacun a une page dans [Diagnostics](diagnostics/rdw00001.md), que le lien du diagnostic dans l'éditeur ouvre.
-
 ---
 ACCUEIL • [HOME](index.md) | [RDCore](https://rubberduck-vba.github.io/RDCore/index.fr.html) | [SDK](https://rubberduck-vba.github.io/RDCore.SDK/api/RDCore.SDK.html) | 🌐 [rubberduckvba.ca](https://rubberduckvba.ca)
 
