@@ -4,8 +4,8 @@ An endpoint passes a procedure's arguments as JSON and receives its returned val
 to each other. It is an RD-VBA addition with no MS-VBAL counterpart.
 
 > [!NOTE]
-> **Not implemented.** Nothing invokes a procedure by name with JSON arguments yet, so no invocation converts its arguments or its value, and the
-> [Arguments](#83-arguments) rules apply nowhere.
+> **Not implemented.** An endpoint passes the procedure's name and its JSON arguments to a machine, but no machine runs the procedure in an RDCore runtime
+> session. So no invocation converts its arguments or its value, and the [Arguments](#83-arguments) rules apply nowhere.
 
 A value that does not convert, in either direction, is run-time error 13 (Type mismatch), unless a row below names another error.
 

@@ -36,7 +36,7 @@ This is ASP.NET Core's naming of a controller, as `[Route("[controller]")]` give
 
 ### Runtime Semantics
 
-Routes match without regard to case, so a request for `/orders/all` matches the route `Orders/all`.
+Routes match without regard to case, so a request for `/orders/all` matches the route `/Orders/all`.
 
 ### Implementation
 
