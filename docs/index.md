@@ -1,15 +1,67 @@
-# RDCore.Web documentation
+# RDCore.Web
 <sup>_Ce document est disponible en [français](index.fr.md)_</sup>
 
----
-
-**RDCore.Web** is the web framework of [RDCore](https://rubberduck-vba.github.io/RDCore/). It serves the class modules of an RD-VBA project through ASP.NET Core. Rubberduck annotations such as `'@Controller`, `'@HttpGet` and `'@HttpPost` describe the endpoints, and the frontend can be any Node.js app.
-
-The [RDCore.Web Reference](specs/rdweb.md) describes the parts of an application, and the [API reference](xref:RDCore.Web.Endpoints) the types that implement them.
-
-The source, its status and how to build it are in the [RDCore.Web repository](https://github.com/rubberduck-vba/RDCore.Web).
+> [!NOTE]
+> RDCore.Web is pre-alpha. It maps and serves endpoints, but no RD-VBA procedure runs end to end yet: see [What works](#what-works).
 
 ---
-[ACCUEIL](index.fr.md) • HOME | [RDCore](https://rubberduck-vba.github.io/RDCore/) | [SDK](https://rubberduck-vba.github.io/RDCore.SDK/api/RDCore.SDK.html) | 🌐 [rubberduckvba.ca](https://rubberduckvba.ca)
+## What it is
+
+**RDCore.Web** is the web framework of [RDCore](https://rubberduck-vba.github.io/RDCore/). It serves the procedures of an RD-VBA project's class
+modules as HTTP endpoints, through ASP.NET Core. Rubberduck comment annotations declare them: `'@Controller` on the module, `'@HttpGet` and `'@HttpPost` on
+its procedures. A procedure's arguments and value pass as JSON, so the frontend can be any app that sends HTTP requests, such as a Node.js or React app.
+
+```vb
+'@Controller("api")
+Option Explicit
+
+'@HttpGet("hello/{name}")
+Public Function Hello(ByVal name As Variant) As Variant
+    Dim greeting As Object
+    Set greeting = CreateObject("Scripting.Dictionary")
+    greeting.Add "greeting", "Hello, " & name & "!"
+    Set Hello = greeting
+End Function
+```
+
+`Hello` is the endpoint `GET /api/hello/{name}`. The annotations are comments to VBA, so the module is still a VBA class module.
+
+---
+## Who it is for
+
+|Reader|What RDCore.Web offers|
+|---|---|
+|A VBA developer|A web API written in VBA, with the annotations Rubberduck users know.|
+|A consultant moving a VBA estate to the web|A path that keeps the VBA code behind any frontend, instead of rewriting it first.|
+|A .NET developer who hosts the application|An ASP.NET Core library: the endpoints are mapped into ASP.NET Core routing, and Kestrel serves them.|
+
+---
+## What works
+
+|Part|Status|
+|---|---|
+|Endpoints from `'@Controller`, `'@HttpGet` and `'@HttpPost`: the HTTP method, and the route under the controller's|Works, from each annotation's name and argument.|
+|Binding: route values and query string values into the parameters of their names, and a `POST` body into a parameter|Works.|
+|Responses: the procedure's value as JSON, no value, a run-time error as a problem details body|Works.|
+|A pool of machines, each running one request at a time|Works.|
+|The host: a page that calls an endpoint and shows its answer|Works. The host maps no endpoint.|
+
+> [!NOTE]
+> **Not implemented.** No machine runs a procedure in an RDCore runtime session, and nothing reads the annotations from a module's source. An endpoint's
+> request reaches a machine, but no RD-VBA code answers it.
+
+---
+## Where to go next
+
+|Page|Read it to|
+|---|---|
+|[Overview](overview.md)|See how an annotated class module becomes endpoints, and how RDCore.Web relates to ASP.NET Core and to an Excel or Access project.|
+|[Getting Started](getting-started.md)|Build and run the host, write a controller module and call it.|
+|[RDCore.Web Reference](specs/rdweb.md)|Look up each part's syntax and rules (English only).|
+|[API reference](xref:RDCore.Web.Endpoints)|Look up the .NET types that implement them (English only).|
+|[RDCore.Web repository](https://github.com/rubberduck-vba/RDCore.Web)|Read the source, its status and how to build it.|
+
+---
+[ACCUEIL](index.fr.md) • HOME | [APERÇU](overview.fr.md) • [OVERVIEW](overview.md) | [DÉMARRER](getting-started.fr.md) • [GET STARTED](getting-started.md) | [RDCore](https://rubberduck-vba.github.io/RDCore/) | [SDK](https://rubberduck-vba.github.io/RDCore.SDK/api/RDCore.SDK.html) | 🌐 [rubberduckvba.ca](https://rubberduckvba.ca)
 
 ---
