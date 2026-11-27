@@ -9,7 +9,7 @@
 
 Ce dépôt est celui de **RDCore.Web**, le cadriciel web de [RDCore](https://github.com/rubberduck-vba/RDCore), sous **⚖️GPLv3 ou toute version ultérieure**. RDCore.Web sert les modules de classe d'un projet RD-VBA au moyen d'ASP.NET Core. Des annotations Rubberduck comme `'@Controller`, `'@HttpGet` et `'@Authorize` décrivent les points de terminaison, et l'interface peut être toute application Node.js.
 
-Le modèle du langage RD-VBA vient du paquet [RDCore.SDK](https://github.com/rubberduck-vba/RDCore.SDK). Ce que vous construisez avec RDCore.Web vous appartient (voir [NOTICE.md](NOTICE.md)).
+Le modèle du langage RD-VBA vient du paquet [RDCore.SDK](https://github.com/rubberduck-vba/RDCore.SDK). Ce que vous construisez avec RDCore.Web vous appartient (voir [NOTICE.md](NOTICE.md)). La documentation est sur le [site de RDCore.Web](https://rubberduck-vba.github.io/RDCore.Web/index.fr.html).
 
 ## État du projet
 RDCore.Web associe les points de terminaison d'une application à leurs routes et les sert au moyen d'ASP.NET Core. Il n'exécute pas de code RD-VBA : la machine qui exécute une procédure dans une session d'exécution RDCore, et le lecteur des annotations dans la source d'un module, sont une direction.
@@ -63,6 +63,7 @@ RDCore.Web est publié sous la licence publique générale GNU, version 3 ou tou
 
 ---
 ### Voir aussi
+- [La documentation de RDCore.Web](https://rubberduck-vba.github.io/RDCore.Web/index.fr.html)
 - [RDCore](https://github.com/rubberduck-vba/RDCore)
 - [RDCore.SDK](https://github.com/rubberduck-vba/RDCore.SDK)
 - [RDCore.VSCode](https://github.com/rubberduck-vba/RDCore.VSCode)
