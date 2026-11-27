@@ -35,7 +35,7 @@ End Function
 |---|---|
 |Les points de terminaison de `'@Controller`, `'@HttpGet` et `'@HttpPost` : la méthode HTTP, et la route sous celle du contrôleur|Fonctionne : lus de l'analyse d'un module.|
 |La liaison : les valeurs de la route et de la chaîne de requête aux paramètres de leur nom, et le corps d'un `POST` au paramètre que nomme `'@FromBody`|Fonctionne.|
-|Les diagnostics : un `POST` qui ne nomme aucun paramètre de corps, et un paramètre que rien ne lie|Fonctionne, avec un correctif rapide qui ajoute `'@FromBody`.|
+|Les diagnostics : un `POST` qui ne nomme aucun paramètre de corps, et chaque autre paramètre que ne lient ni sa route ni son corps|Fonctionne dans une plateforme RDCore qui charge l'extension RDWeb, avec un correctif rapide qui ajoute `'@FromBody`.|
 |Les réponses : la valeur de la procédure en JSON, aucune valeur, une erreur d'exécution en corps « problem details »|Fonctionne.|
 |Un bassin de machines, chacune n'exécutant qu'une requête à la fois|Fonctionne.|
 |L'hôte : une page qui appelle un point de terminaison et affiche sa réponse|Fonctionne. L'hôte n'associe aucun point de terminaison.|

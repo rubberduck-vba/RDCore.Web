@@ -149,8 +149,8 @@ The argument is a string literal: the name of a parameter of the procedure. The 
 |---|---|
 |A `POST` endpoint|The body binds to the parameter named, matched without regard to case and written as the procedure spells it. The other parameters the route does not bind are bound from the query string.|
 |A `GET` endpoint|None: a `GET` has no body, whatever `'@FromBody` names.|
-|The name is not a parameter of the procedure|An error: `FromAnnotation` throws `RDWebEndpointException`, whose message names the parameter, the module and the procedure.|
-|The name is a parameter the route binds|The same error.|
+|A `POST` whose name is not a parameter of the procedure|An error: `FromAnnotation` throws `RDWebEndpointException`, whose message names the parameter, the module and the procedure.|
+|A `POST` whose name is a parameter the route binds|The same error.|
 
 A `POST` with no `'@FromBody` still binds its body, to the first parameter the route does not bind. Diagnostic
 [RDW00001](../diagnostics/rdw00001.md) reports it, with a quick fix that adds the annotation, and [RDW00002](../diagnostics/rdw00002.md) reports each
