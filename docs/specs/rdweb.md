@@ -43,14 +43,14 @@ A section not yet written is listed without a link.
   - [3.1 Controller Routes](rdweb.3.0.routes.md#31-controller-routes)
   - [3.2 Endpoint Routes](rdweb.3.0.routes.md#32-endpoint-routes)
   - [3.3 Route Parameters](rdweb.3.0.routes.md#33-route-parameters)
-- 4.0 Binding
-  - 4.1 Route Values
-  - 4.2 Query String Values
-  - 4.3 Request Body
-- 5.0 Responses
-  - 5.1 Returned Values
-  - 5.2 Run-time Errors
-  - 5.3 Other Outcomes
+- [4.0 Binding](rdweb.4.0.binding.md)
+  - [4.1 Route Values](rdweb.4.0.binding.md#41-route-values)
+  - [4.2 Query String Values](rdweb.4.0.binding.md#42-query-string-values)
+  - [4.3 Request Body](rdweb.4.0.binding.md#43-request-body)
+- [5.0 Responses](rdweb.5.0.responses.md)
+  - [5.1 Returned Values](rdweb.5.0.responses.md#51-returned-values)
+  - [5.2 Run-time Errors](rdweb.5.0.responses.md#52-run-time-errors)
+  - [5.3 Other Outcomes](rdweb.5.0.responses.md#53-other-outcomes)
 - 6.0 Machines
   - 6.1 The Machine Pool
 - 7.0 Hosting
