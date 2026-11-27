@@ -25,10 +25,17 @@ public static class RDWebAnnotations
     public const string HttpGet = "HttpGet";
 
     /// <summary>
-    /// The member annotation that serves a procedure for the HTTP <c>POST</c> method: <c>'@HttpPost</c>. The request's JSON body binds to the first
-    /// parameter of the procedure that its route does not name.
+    /// The member annotation that serves a procedure for the HTTP <c>POST</c> method: <c>'@HttpPost</c>. The request's JSON body binds to the parameter
+    /// <see cref="FromBody"/> names, else to the first parameter of the procedure that its route does not name.
     /// </summary>
     public const string HttpPost = "HttpPost";
+
+    /// <summary>
+    /// The member annotation that names the parameter the request's JSON body binds to: <c>'@FromBody("order")</c>, written immediately above the
+    /// procedure with its HTTP method annotations. It makes the binding explicit; without it, the body binds to the first parameter the route does not
+    /// bind. It names a parameter because a parameter list holds no comment. A <c>GET</c> has no body, and binds none.
+    /// </summary>
+    public const string FromBody = "FromBody";
 
     /// <summary>
     /// The HTTP method a member annotation serves its procedure for.

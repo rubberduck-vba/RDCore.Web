@@ -53,8 +53,8 @@ public sealed record class RDWebEndpoint
     public ImmutableArray<string> RouteParameters { get; }
 
     /// <summary>
-    /// The parameter the request's JSON body binds to: for a <c>POST</c>, the first parameter the route does not bind. <see langword="null"/> for a
-    /// <c>GET</c>, and for a <c>POST</c> whose parameters the route binds all of.
+    /// The parameter the request's JSON body binds to: for a <c>POST</c>, the one <c>'@FromBody</c> names, else the first parameter the route does not
+    /// bind. <see langword="null"/> for a <c>GET</c>, and for a <c>POST</c> whose parameters the route binds all of.
     /// </summary>
     public string? BodyParameter { get; }
 
@@ -73,12 +73,18 @@ public sealed record class RDWebEndpoint
     /// The argument of the member annotation; <see langword="null"/> when it writes none, which serves the procedure on the controller's route. A route that
     /// starts with <c>/</c> or <c>~/</c> is from the root of the application, and the controller's route does not prefix it.
     /// </param>
+    /// <param name="bodyParameter">
+    /// The argument of the procedure's <c>'@FromBody</c> annotation: the parameter the body of a <c>POST</c> binds to, matched in any case, as VBA
+    /// matches names. <see langword="null"/> when the procedure has none, which binds the body to the first parameter the route does not bind. A
+    /// <c>GET</c> has no body, and binds none.
+    /// </param>
     /// <returns>The endpoint; <see langword="null"/> when the annotation is not one of an HTTP method (<see cref="RDWebAnnotations.HttpMethodOf"/>).</returns>
     /// <exception cref="RDWebEndpointException">
-    /// The route is not a valid route template, or it names a route parameter that is not a parameter of the procedure.
+    /// The route is not a valid route template, or it names a route parameter that is not a parameter of the procedure; or, for a <c>POST</c>,
+    /// <paramref name="bodyParameter"/> is not a parameter of the procedure, or is one the route binds.
     /// </exception>
     public static RDWebEndpoint? FromAnnotation(string moduleName, string? controllerRoute, string procedureName, IReadOnlyList<string> parameters,
-        string annotationName, string? route)
+        string annotationName, string? route, string? bodyParameter = null)
     {
         if (RDWebAnnotations.HttpMethodOf(annotationName) is not { } method)
         {
@@ -93,20 +99,36 @@ public sealed record class RDWebEndpoint
         }
         catch (RoutePatternException exception)
         {
-            throw new RDWebEndpointException(Format(RDWebResources.Endpoint_InvalidRoute, template, moduleName, procedureName, exception.Message), exception);
+            throw new RDWebEndpointException(
+                string.Format(CultureInfo.CurrentUICulture, RDWebResources.Endpoint_InvalidRoute, template, moduleName, procedureName, exception.Message),
+                exception);
         }
 
         var bound = new List<string>();
         foreach (var name in pattern.Parameters.Select(parameter => parameter.Name))
         {
             var parameter = parameters.FirstOrDefault(candidate => string.Equals(candidate, name, StringComparison.OrdinalIgnoreCase))
-                ?? throw new RDWebEndpointException(Format(RDWebResources.Endpoint_RouteParameterIsNoParameter, name, moduleName, procedureName));
+                ?? throw new RDWebEndpointException(
+                    string.Format(CultureInfo.CurrentUICulture, RDWebResources.Endpoint_RouteParameterIsNoParameter, name, moduleName, procedureName));
             bound.Add(parameter);
         }
 
         var routeParameters = parameters.Where(bound.Contains).ToImmutableArray();
-        var body = method == HttpMethods.Post ? parameters.FirstOrDefault(parameter => !bound.Contains(parameter)) : null;
+        var body = method != HttpMethods.Post ? null
+            : bodyParameter is null ? parameters.FirstOrDefault(parameter => !bound.Contains(parameter))
+            : ExplicitBody(bodyParameter);
         return new RDWebEndpoint(method, template, moduleName, procedureName, [.. parameters], routeParameters, body);
+
+        string ExplicitBody(string name)
+        {
+            var parameter = parameters.FirstOrDefault(candidate => string.Equals(candidate, name, StringComparison.OrdinalIgnoreCase))
+                ?? throw new RDWebEndpointException(
+                    string.Format(CultureInfo.CurrentUICulture, RDWebResources.Endpoint_BodyIsNoParameter, name, moduleName, procedureName));
+            return bound.Contains(parameter)
+                ? throw new RDWebEndpointException(
+                    string.Format(CultureInfo.CurrentUICulture, RDWebResources.Endpoint_BodyIsRouteParameter, name, moduleName, procedureName))
+                : parameter;
+        }
     }
 
     /// <summary>
@@ -134,6 +156,4 @@ public sealed record class RDWebEndpoint
         var parts = new[] { controllerRoute.Trim('/'), route?.Trim('/') ?? string.Empty }.Where(part => part.Length > 0);
         return "/" + string.Join('/', parts);
     }
-
-    private static string Format(string format, params object[] arguments) => string.Format(CultureInfo.CurrentCulture, format, arguments);
 }

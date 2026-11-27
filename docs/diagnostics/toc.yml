@@ -1,0 +1,4 @@
+- name: "RDW00001: Implicit body binding"
+  href: rdw00001.md
+- name: "RDW00002: Several body parameters"
+  href: rdw00002.md

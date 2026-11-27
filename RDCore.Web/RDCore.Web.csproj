@@ -13,6 +13,7 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="RDCore.SDK" Version="$(RDCoreSdkVersion)" />
+    <InternalsVisibleTo Include="RDCore.Web.Tests" />
   </ItemGroup>
 
 </Project>
