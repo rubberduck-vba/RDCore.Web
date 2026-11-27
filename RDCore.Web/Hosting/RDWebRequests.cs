@@ -14,6 +14,9 @@ namespace RDCore.Web.Hosting;
 // one request to an endpoint: its arguments bound, the procedure run on a machine of the pool, and its result written as the response.
 internal static class RDWebRequests
 {
+    // how many seconds a refused request is asked to wait before it tries again: a refusal is the pool being busy, which a moment can change.
+    private const string RetryAfterSeconds = "1";
+
     public static async Task ServeAsync(HttpContext context, RDWebEndpoint endpoint, RDWebMachinePool pool)
     {
         var request = context.Request;
@@ -54,6 +57,11 @@ internal static class RDWebRequests
 
         var invocation = new ProgramInvocation(endpoint.ModuleName, endpoint.ProcedureName, arguments.ToImmutable());
         var result = await pool.InvokeAsync(invocation, context.RequestAborted);
+        if (result.Outcome is ExecutionOutcome.Refused)
+        {
+            context.Response.Headers.RetryAfter = RetryAfterSeconds;
+        }
+
         await ResponseOf(endpoint, result).ExecuteAsync(context);
     }
 

@@ -174,7 +174,7 @@ public sealed class RDWebEndpointsHostingTests
     }
 
     [TestMethod]
-    public async Task AMachineThatRefusesTheRequest_AnswersServiceUnavailable()
+    public async Task ARefusedRequest_AnswersServiceUnavailable_WithWhenToRetry()
     {
         var machine = new ScriptedMachine(_ => ProgramInvocationResult.Ended(ExecutionOutcome.Refused, "A program is running."));
         await using var pool = await PoolOfAsync(machine);
@@ -183,6 +183,7 @@ public sealed class RDWebEndpointsHostingTests
         using var response = await app.Client.GetAsync("api/orders/busy", TestContext.CancellationToken);
 
         Assert.AreEqual(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.IsGreaterThan(TimeSpan.Zero, response.Headers.RetryAfter?.Delta ?? TimeSpan.Zero, "the response says how long to wait");
     }
 
     [TestMethod]
@@ -199,6 +200,7 @@ public sealed class RDWebEndpointsHostingTests
 
         Assert.AreEqual(HttpStatusCode.InternalServerError, response.StatusCode);
         Assert.AreEqual("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        Assert.IsNull(response.Headers.RetryAfter, "a request that ran is not one to retry");
     }
 
     [TestMethod]

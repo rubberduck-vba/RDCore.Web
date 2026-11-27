@@ -25,7 +25,7 @@ public static class RDWebEndpointRouteBuilderExtensions
     /// <item>A value the procedure returns is the response's JSON body (<c>200</c>); a procedure that returns none answers <c>204</c>.</item>
     /// <item>A run-time error the procedure does not handle answers <c>500</c> with a problem details body (RFC 9457) whose <c>errorNumber</c> is the
     /// error's number and whose <c>errorCode</c> is its diagnostic code. A request the pool refuses, because no machine was idle in time or the machine
-    /// refused it, answers <c>503</c>; any other outcome answers <c>500</c>.</item>
+    /// refused it, answers <c>503</c> with a <c>Retry-After</c> of one second; any other outcome answers <c>500</c>.</item>
     /// <item>A body that is not valid JSON answers <c>400</c>, and one that is not of the JSON media type answers <c>415</c>, before the procedure
     /// runs.</item>
     /// </list>
