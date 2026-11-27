@@ -86,6 +86,9 @@ The problem details body's `detail` says which of the two it is ("The request bo
 |---|---|
 |Route values bind as strings, decoded, without regard to case|`RDWebEndpointsHostingTests.TheRouteValues_BindTheirParameters_AsStrings`|
 |A query string value binds the parameter of its name; one that names none binds nothing; a parameter nothing binds gets no argument|`RDWebEndpointsHostingTests.AQueryStringValue_BindsTheParameterOfItsName_AndAParameterNothingBinds_GetsNoArgument`|
+|A query string name given twice binds its values joined by commas|`RDWebEndpointsHostingTests.AQueryStringNameGivenTwice_BindsItsValuesJoinedByCommas`|
 |The body binds the body parameter as the JSON it holds|`RDWebEndpointsHostingTests.APostedJsonBody_BindsTheBodyParameter_AsTheJsonItHolds`|
+|The body replaces a query string value of the same name|`RDWebEndpointsHostingTests.APostedJsonBody_ReplacesAQueryStringValueOfTheSameName`|
+|A `POST` with no body reads nothing, whatever its media type, and its body parameter binds from the query string|`RDWebEndpointsHostingTests.APostWithNoBody_ReadsNothing_AndItsBodyParameterBindsFromTheQueryString`|
 |A body that is not valid JSON answers `400` and runs nothing|`RDWebEndpointsHostingTests.APostedBodyThatIsNotValidJson_AnswersBadRequest_AndRunsNothing`|
 |A body that is not JSON answers `415` and runs nothing|`RDWebEndpointsHostingTests.APostedBodyThatIsNotJson_AnswersUnsupportedMediaType_AndRunsNothing`|
