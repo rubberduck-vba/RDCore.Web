@@ -30,6 +30,12 @@
   <data name="Pool_MachineDidNotStop" xml:space="preserve">
     <value>The request ran past its deadline, and its machine did not stop.</value>
   </data>
+  <data name="Endpoint_BodyIsNoParameter" xml:space="preserve">
+    <value>The body parameter '{0}' that '@FromBody names for {1}.{2} is not a parameter of the procedure.</value>
+  </data>
+  <data name="Endpoint_BodyIsRouteParameter" xml:space="preserve">
+    <value>The body parameter '{0}' that '@FromBody names for {1}.{2} is bound by the route.</value>
+  </data>
   <data name="Request_BodyIsNotJson" xml:space="preserve">
     <value>The request body is not valid JSON.</value>
   </data>
@@ -47,5 +53,14 @@
   </data>
   <data name="Problem_DidNotComplete" xml:space="preserve">
     <value>The procedure {0}.{1} did not complete ({2}).</value>
+  </data>
+  <data name="ImplicitBodyBinding_Message" xml:space="preserve">
+    <value>The request body of {1} binds to '{0}' because it is the first parameter the route does not bind.</value>
+  </data>
+  <data name="ImplicitBodyBinding_Fix" xml:space="preserve">
+    <value>Name the body parameter: '@FromBody("{0}")</value>
+  </data>
+  <data name="SeveralBodyParameters_Message" xml:space="preserve">
+    <value>'{0}' binds from the query string: the request body of {2} binds to '{1}' only.</value>
   </data>
 </root>

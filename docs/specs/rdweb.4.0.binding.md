@@ -56,7 +56,8 @@ The body of a `POST` request, of a JSON media type: `application/json`, or a typ
 
 ### Static Semantics
 
-Only a `POST` endpoint with a body parameter reads a body: the first parameter its route does not bind ([§2.3](rdweb.2.0.annotations.md#23-httppost)).
+Only a `POST` endpoint with a body parameter reads a body: the parameter `'@FromBody` names ([§2.4](rdweb.2.0.annotations.md#24-frombody)), else the
+first parameter its route does not bind ([§2.3](rdweb.2.0.annotations.md#23-httppost)).
 
 ### Runtime Semantics
 
@@ -88,6 +89,7 @@ The problem details body's `detail` says which of the two it is ("The request bo
 |A query string value binds the parameter of its name; one that names none binds nothing; a parameter nothing binds gets no argument|`RDWebEndpointsHostingTests.AQueryStringValue_BindsTheParameterOfItsName_AndAParameterNothingBinds_GetsNoArgument`|
 |A query string name given twice binds its values joined by commas|`RDWebEndpointsHostingTests.AQueryStringNameGivenTwice_BindsItsValuesJoinedByCommas`|
 |The body binds the body parameter as the JSON it holds|`RDWebEndpointsHostingTests.APostedJsonBody_BindsTheBodyParameter_AsTheJsonItHolds`|
+|The body binds the parameter `'@FromBody` names; the query string binds the others|`RDWebEndpointsHostingTests.APostedJsonBody_BindsTheParameterFromBodyNames_AndTheQueryStringStillBindsTheOthers`|
 |The body replaces a query string value of the same name|`RDWebEndpointsHostingTests.APostedJsonBody_ReplacesAQueryStringValueOfTheSameName`|
 |A `POST` with no body reads nothing, whatever its media type, and its body parameter binds from the query string|`RDWebEndpointsHostingTests.APostWithNoBody_ReadsNothing_AndItsBodyParameterBindsFromTheQueryString`|
 |A body that is not valid JSON answers `400` and runs nothing|`RDWebEndpointsHostingTests.APostedBodyThatIsNotValidJson_AnswersBadRequest_AndRunsNothing`|

@@ -87,7 +87,6 @@ réponse, avec `200 OK`. `RDWebEndpointsHostingTests.TheValueAProcedureReturns_I
 
 |Partie manquante|Ce que ça veut dire|
 |---|---|
-|Un lecteur des annotations d'un module|Les points de terminaison sont faits du nom et de l'argument de chaque annotation, que passe le code qui héberge l'application. Rien ne les lit dans le code source d'un module.|
 |Une machine qui exécute une procédure|Aucune machine n'exécute une procédure dans une session d'exécution RDCore, alors aucun code RD-VBA ne répond à une requête.|
 |Des points de terminaison dans l'hôte|L'hôte n'en associe aucun : il ne sert que sa page.|
 

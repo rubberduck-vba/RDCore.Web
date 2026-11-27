@@ -6,8 +6,8 @@ This page says how the parts of an RDCore.Web application fit together, and link
 [RDCore.Web Reference](specs/rdweb.md) has the rules of each part.
 
 > [!NOTE]
-> **Not implemented.** No RD-VBA procedure runs end to end: no machine runs a procedure in an RDCore runtime session, and nothing reads the annotations
-> from a module's source. The steps below that come after a machine receives the request describe what RDCore.Web does with a machine's answer.
+> **Not implemented.** No RD-VBA procedure runs end to end: no machine runs a procedure in an RDCore runtime session, and the host reads no module.
+> The steps below that come after a machine receives the request describe what RDCore.Web does with a machine's answer.
 
 ---
 ## From a class module to a response
@@ -33,6 +33,7 @@ Public Function Order(ByVal id As Variant, Optional ByVal format As Variant) As 
 End Function
 
 '@HttpPost("{id}/lines")
+'@FromBody("line")
 Public Function AddLine(ByVal id As Variant, ByVal line As Variant) As Variant
     ' ...
 End Function
@@ -44,8 +45,8 @@ End Function
 |`GET /api/orders/7`|`Order`|`id` is `"7"`; `format` gets no argument.|
 |`POST /api/orders/7/lines` with `{ "item": "duck", "quantity": 3 }`|`AddLine`|`id` is `"7"`; `line` receives the body's JSON.|
 
-Route values and query string values bind as strings, to the parameter of their name without regard to case. A `POST` body binds to the first parameter
-the route does not bind.
+Route values and query string values bind as strings, to the parameter of their name without regard to case. A `POST` body binds to the parameter
+`'@FromBody` names, else to the first parameter the route does not bind.
 
 ---
 ## Any frontend
@@ -67,6 +68,7 @@ The annotations play the part of ASP.NET Core's controller attributes:
 |`'@Controller` with no argument on `OrdersController`|`[Route("[controller]")]` on `OrdersController`: `Orders`|[Routing to controller actions](https://learn.microsoft.com/aspnet/core/mvc/controllers/routing)|
 |`'@HttpGet("{id}")` on a procedure|`[HttpGet("{id}")]` on an action|[`HttpGetAttribute`](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.httpgetattribute)|
 |`'@HttpPost` on a procedure|`[HttpPost]` on an action|[`HttpPostAttribute`](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.httppostattribute)|
+|`'@FromBody("line")` on a procedure|`[FromBody]` on the `line` parameter|[`FromBodyAttribute`](https://learn.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.frombodyattribute)|
 |A route such as `hello/{name}`|A route template|[Route templates](https://learn.microsoft.com/aspnet/core/fundamentals/routing#route-templates)|
 |Route, query string and body values into parameters|Model binding|[Model binding](https://learn.microsoft.com/aspnet/core/mvc/models/model-binding)|
 |A run-time error as `500`|A problem details response|[Problem details](https://learn.microsoft.com/aspnet/core/fundamentals/error-handling#problem-details)|
@@ -93,7 +95,7 @@ a controller holds. Code that uses Excel's or Access's objects (`Range`, `DoCmd`
 |A controller with no route, under its name less `Controller`|`RDWebEndpointTests.AControllerWithNoRoute_IsRoutedUnderItsModuleName_LessItsControllerSuffix`|
 |Route values bind as strings, without regard to case|`RDWebEndpointsHostingTests.TheRouteValues_BindTheirParameters_AsStrings`|
 |A query string value binds the parameter of its name|`RDWebEndpointsHostingTests.AQueryStringValue_BindsTheParameterOfItsName_AndAParameterNothingBinds_GetsNoArgument`|
-|A `POST` body binds the first parameter the route does not bind|`RDWebEndpointTests.ThePostBody_BindsTheFirstParameterTheRouteDoesNotBind`, `RDWebEndpointsHostingTests.APostedJsonBody_BindsTheBodyParameter_AsTheJsonItHolds`|
+|A `POST` body binds the parameter `'@FromBody` names, else the first parameter the route does not bind|`RDWebEndpointTests.ThePostBody_BindsTheParameterFromBodyNames_InTheSpellingOfTheProcedure`, `RDWebEndpointTests.ThePostBody_BindsTheFirstParameterTheRouteDoesNotBind`, `RDWebEndpointsHostingTests.APostedJsonBody_BindsTheBodyParameter_AsTheJsonItHolds`|
 |The value is the JSON body; no value is `204`|`RDWebEndpointsHostingTests.TheValueAProcedureReturns_IsTheJsonBodyOfTheResponse`, `RDWebEndpointsHostingTests.AProcedureThatReturnsNoValue_AnswersNoContent`|
 |A run-time error is `500` with its number and code|`RDWebEndpointsHostingTests.ARunTimeError_AnswersInternalServerError_WithTheErrorsNumberAndCode`|
 |A machine runs one request at a time|`RDWebMachinePoolTests.APoolOfOneMachine_RunsASecondRequestOnlyOnceTheFirstHasReturned`|

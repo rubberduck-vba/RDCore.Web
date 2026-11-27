@@ -171,6 +171,23 @@ public sealed class RDWebEndpointsHostingTests
     }
 
     [TestMethod]
+    public async Task APostedJsonBody_BindsTheParameterFromBodyNames_AndTheQueryStringStillBindsTheOthers()
+    {
+        var machine = new ScriptedMachine(_ => ProgramInvocationResult.Completed());
+        var endpoint = RDWebEndpoint.FromAnnotation("OrdersController", "api/orders", "Serve", ["id", "notify", "line"], RDWebAnnotations.HttpPost,
+            "{id}/lines", "line")!;
+        await using var pool = await PoolOfAsync(machine);
+        await using var app = await StartAsync(pool, endpoint);
+
+        using var response = await app.Client.PostAsync("api/orders/7/lines?notify=yes", Json("""{ "item": "duck" }"""), TestContext.CancellationToken);
+
+        Assert.AreEqual(HttpStatusCode.NoContent, response.StatusCode);
+        var arguments = machine.Invocations.Single().Arguments;
+        Assert.AreEqual("duck", (string?)arguments["line"]!["item"]);
+        Assert.AreEqual("yes", (string?)arguments["notify"]);
+    }
+
+    [TestMethod]
     public async Task APostedBodyThatIsNotValidJson_AnswersBadRequest_AndRunsNothing()
     {
         var machine = new ScriptedMachine(_ => ProgramInvocationResult.Completed());

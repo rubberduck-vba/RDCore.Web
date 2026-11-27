@@ -12,13 +12,14 @@ This repository is for **RDCore.Web**, the web framework of [RDCore](https://git
 The RD-VBA language model comes from the [RDCore.SDK](https://github.com/rubberduck-vba/RDCore.SDK) package. What you build with RDCore.Web is yours (see [NOTICE.md](NOTICE.md)). The documentation is on the [RDCore.Web site](https://rubberduck-vba.github.io/RDCore.Web/).
 
 ## Project Status
-RDCore.Web maps the endpoints of an application and serves them through ASP.NET Core. It does not run RD-VBA code: the machine that runs a procedure in an RDCore runtime session, and the reader of the annotations in a module's source, are a direction.
+RDCore.Web maps the endpoints of an application and serves them through ASP.NET Core. It reads the endpoints from the annotations in a module's source. It does not run RD-VBA code: no machine of the pool runs a procedure in an RDCore runtime session.
 
 | Part | Status |
 |---|---|
 | Endpoints from the `'@Controller`, `'@HttpGet` and `'@HttpPost` annotations: the HTTP method, the route under the controller's, and a check that each route parameter names a parameter of the procedure | Works, from each annotation's name and argument. |
 | The machine pool: each request runs alone on one machine, and a request that finds no idle machine waits for one without holding a thread | Works. The pool grows from its minimum to its maximum, resets each machine after each request, and recycles a machine after a set number of requests or one that did not end. A request past its deadline is cancelled, and a machine that does not stop is replaced. A pool of one machine serves its requests one at a time. |
-| Binding: a route value or a query string value into the procedure's parameter of that name, as a string; the JSON body of a `POST` into the first parameter its route does not bind | Works. |
+| Binding: a route value or a query string value into the procedure's parameter of that name, as a string; the JSON body of a `POST` into the parameter `'@FromBody` names, else the first parameter its route does not bind | Works. |
+| Diagnostics of the body binding: [RDW00001](docs/diagnostics/rdw00001.md) where no `'@FromBody` names the body's parameter, with a quick fix that adds it, and [RDW00002](docs/diagnostics/rdw00002.md) at each further parameter of a `POST` that its route does not bind | Works, in an RDCore platform that loads the RDWeb extension. |
 | Responses: the procedure's value as JSON (`200`), no value (`204`), a run-time error as `500` with a problem details body (RFC 9457) that holds the error's number and code | Works. |
 | The host: a page in `wwwroot` that calls an endpoint and shows its answer | Works. The host maps no endpoint. |
 
@@ -37,14 +38,14 @@ Public Function Hello(ByVal name As Variant) As Variant
 End Function
 ```
 
-`Hello` is the endpoint `GET /api/hello/{name}`, and its route binds `name`. Running it, and answering with its `Dictionary` as a JSON object, take a machine, which is part of the direction above.
+`Hello` is the endpoint `GET /api/hello/{name}`, and its route binds `name`. Running it, and answering with its `Dictionary` as a JSON object, take a machine that runs RD-VBA code, which RDCore.Web does not have.
 
 ## The solution
 
 | Project | What it is |
 |---|---|
 | `RDCore.Web` | The framework library, and the repository's NuGet package. It builds on RDCore.SDK and ASP.NET Core. |
-| `RDCore.Web.Host` | The ASP.NET Core host that serves an application. |
+| `RDCore.Web.Host` | The ASP.NET Core host that serves an application. Started by an RDCore platform, it is the RDWeb extension, which reports the `RDW` diagnostics; `PublishExtension.ps1` publishes it into a platform's `Extensions/RDCore.Web/` folder. |
 | `RDCore.Web.Tests` | The tests (MSTest). |
 
 ## Building from source

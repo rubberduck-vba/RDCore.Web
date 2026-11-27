@@ -12,13 +12,14 @@ Ce dépôt est celui de **RDCore.Web**, le cadriciel web de [RDCore](https://git
 Le modèle du langage RD-VBA vient du paquet [RDCore.SDK](https://github.com/rubberduck-vba/RDCore.SDK). Ce que vous construisez avec RDCore.Web vous appartient (voir [NOTICE.md](NOTICE.md)). La documentation est sur le [site de RDCore.Web](https://rubberduck-vba.github.io/RDCore.Web/index.fr.html).
 
 ## État du projet
-RDCore.Web associe les points de terminaison d'une application à leurs routes et les sert au moyen d'ASP.NET Core. Il n'exécute pas de code RD-VBA : la machine qui exécute une procédure dans une session d'exécution RDCore, et le lecteur des annotations dans la source d'un module, sont une direction.
+RDCore.Web associe les points de terminaison d'une application à leurs routes et les sert au moyen d'ASP.NET Core. Il lit les points de terminaison dans les annotations de la source d'un module. Il n'exécute pas de code RD-VBA : aucune machine du bassin n'exécute une procédure dans une session d'exécution RDCore.
 
 | Partie | État |
 |---|---|
 | Les points de terminaison des annotations `'@Controller`, `'@HttpGet` et `'@HttpPost` : la méthode HTTP, la route sous celle du contrôleur, et la vérification que chaque paramètre de route nomme un paramètre de la procédure | Fonctionne, à partir du nom et de l'argument de chaque annotation. |
 | Le bassin de machines : chaque requête s'exécute seule sur une machine, et une requête qui ne trouve aucune machine libre en attend une sans retenir de fil d'exécution | Fonctionne. Le bassin croît de son minimum à son maximum, réinitialise chaque machine après chaque requête, et recycle une machine après un nombre fixé de requêtes ou après une requête qui ne s'est pas terminée. Une requête qui dépasse son échéance est annulée, et une machine qui ne s'arrête pas est remplacée. Un bassin d'une seule machine sert ses requêtes une à la fois. |
-| La liaison : une valeur de route ou de chaîne de requête au paramètre de la procédure qui porte son nom, comme chaîne; le corps JSON d'un `POST` au premier paramètre que sa route ne lie pas | Fonctionne. |
+| La liaison : une valeur de route ou de chaîne de requête au paramètre de la procédure qui porte son nom, comme chaîne; le corps JSON d'un `POST` au paramètre que nomme `'@FromBody`, sinon au premier paramètre que sa route ne lie pas | Fonctionne. |
+| Les diagnostics de la liaison du corps : [RDW00001](docs/diagnostics/rdw00001.md) là où aucun `'@FromBody` ne nomme le paramètre du corps, avec un correctif rapide qui l'ajoute, et [RDW00002](docs/diagnostics/rdw00002.md) à chaque autre paramètre d'un `POST` que sa route ne lie pas | Fonctionne, dans une plateforme RDCore qui charge l'extension RDWeb. |
 | Les réponses : la valeur de la procédure en JSON (`200`), aucune valeur (`204`), une erreur d'exécution en `500` avec un corps de détails du problème (RFC 9457) qui contient le numéro et le code de l'erreur | Fonctionne. |
 | L'hôte : une page dans `wwwroot` qui appelle un point de terminaison et montre sa réponse | Fonctionne. L'hôte n'associe aucun point de terminaison. |
 
@@ -37,14 +38,14 @@ Public Function Hello(ByVal name As Variant) As Variant
 End Function
 ```
 
-`Hello` est le point de terminaison `GET /api/hello/{name}`, et sa route lie `name`. Pour l'exécuter et répondre avec son `Dictionary` en objet JSON, il faut une machine, qui fait partie de la direction décrite plus haut.
+`Hello` est le point de terminaison `GET /api/hello/{name}`, et sa route lie `name`. Pour l'exécuter et répondre avec son `Dictionary` en objet JSON, il faut une machine qui exécute du code RD-VBA, ce que RDCore.Web n'a pas.
 
 ## La solution
 
 | Projet | Ce que c'est |
 |---|---|
 | `RDCore.Web` | La bibliothèque du cadriciel, et le paquet NuGet du dépôt. Elle s'appuie sur RDCore.SDK et ASP.NET Core. |
-| `RDCore.Web.Host` | L'hôte ASP.NET Core qui sert une application. |
+| `RDCore.Web.Host` | L'hôte ASP.NET Core qui sert une application. Lancé par une plateforme RDCore, il est l'extension RDWeb, qui signale les diagnostics `RDW`; `PublishExtension.ps1` le publie dans le dossier `Extensions/RDCore.Web/` d'une plateforme. |
 | `RDCore.Web.Tests` | Les tests (MSTest). |
 
 ## Compiler à partir des sources

@@ -72,7 +72,7 @@ internal static class RDWebRequests
         { Outcome: ExecutionOutcome.RuntimeError } => Results.Problem(
             detail: result.ErrorMessage,
             statusCode: StatusCodes.Status500InternalServerError,
-            title: Format(RDWebResources.Problem_RuntimeError, result.ErrorNumber),
+            title: string.Format(CultureInfo.CurrentUICulture, RDWebResources.Problem_RuntimeError, result.ErrorNumber),
             extensions: new Dictionary<string, object?> { ["errorNumber"] = result.ErrorNumber, ["errorCode"] = result.ErrorCode }),
         { Outcome: ExecutionOutcome.Refused } => Results.Problem(
             detail: result.ErrorMessage,
@@ -81,12 +81,11 @@ internal static class RDWebRequests
         { Outcome: ExecutionOutcome.NotFound } => Results.Problem(
             detail: result.ErrorMessage,
             statusCode: StatusCodes.Status500InternalServerError,
-            title: Format(RDWebResources.Problem_NotFound, endpoint.ModuleName, endpoint.ProcedureName)),
+            title: string.Format(CultureInfo.CurrentUICulture, RDWebResources.Problem_NotFound, endpoint.ModuleName, endpoint.ProcedureName)),
         _ => Results.Problem(
             detail: result.ErrorMessage,
             statusCode: StatusCodes.Status500InternalServerError,
-            title: Format(RDWebResources.Problem_DidNotComplete, endpoint.ModuleName, endpoint.ProcedureName, result.Outcome)),
+            title: string.Format(
+                CultureInfo.CurrentUICulture, RDWebResources.Problem_DidNotComplete, endpoint.ModuleName, endpoint.ProcedureName, result.Outcome)),
     };
-
-    private static string Format(string format, params object[] arguments) => string.Format(CultureInfo.CurrentCulture, format, arguments);
 }
