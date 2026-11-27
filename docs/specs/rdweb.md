@@ -32,7 +32,7 @@ Where a page relies on ASP.NET Core (routing, model binding, problem details, Ke
 ---
 ## Table of Contents
 
-The sections are written one chapter at a time. A section not yet written is listed without a link.
+A section not yet written is listed without a link.
 
 - 1.0 Applications
 - 2.0 Annotations
