@@ -1,5 +1,5 @@
 # Documentation de RDCore.Web
-<sup>_This document is available in [English](index.html)_</sup>
+<sup>_This document is available in [English](index.md)_</sup>
 
 ---
 
