@@ -9,7 +9,7 @@ answers with a problem details body (RFC 9457, media type `application/problem+j
 |The procedure completed and returned a value|`200 OK`|The value, as JSON ([§5.1](#51-returned-values)).|
 |The procedure completed and returned none|`204 No Content`|None.|
 |A run-time error the procedure did not handle|`500 Internal Server Error`|Problem details with the error's number and code ([§5.2](#52-run-time-errors)).|
-|The machine refused the request|`503 Service Unavailable`|Problem details ([§5.3](#53-other-outcomes)).|
+|No machine was idle in time, or the machine refused the request|`503 Service Unavailable`|Problem details ([§5.3](#53-other-outcomes)).|
 |Any other outcome|`500 Internal Server Error`|Problem details ([§5.3](#53-other-outcomes)).|
 
 > [!NOTE]
@@ -49,11 +49,13 @@ ASP.NET Core adds its own, such as `type`.
 
 |Outcome|Status|`title`|
 |---|---|---|
-|The machine refused the request|`503 Service Unavailable`|`The machine refused the request.`|
+|No machine was idle in time ([§6.1](rdweb.6.0.machines.md#deadlines)), or the machine refused the request|`503 Service Unavailable`|`The machine refused the request.`|
 |The procedure was not found|`500 Internal Server Error`|`There is no procedure Module.Procedure to invoke.`|
 |Any other: the program had a syntax error, halted at an `End` statement, was interrupted, or ran code that is not implemented|`500 Internal Server Error`|`The procedure Module.Procedure did not complete (Outcome).`|
 
 The `title` is in English or French by the application's UI culture, and the `detail` is the machine's explanation of the outcome.
+
+A `503` has the header `Retry-After: 1`: the client may send the request again a second later.
 
 ---
 ## Implementation
@@ -72,5 +74,5 @@ The `title` is in English or French by the application's UI culture, and the `de
 |A value of `null` is the body `null`|`RDWebEndpointsHostingTests.AProcedureThatReturnsNull_AnswersJsonNull`|
 |No value answers `204`|`RDWebEndpointsHostingTests.AProcedureThatReturnsNoValue_AnswersNoContent`|
 |A run-time error answers `500` with its number, code and description|`RDWebEndpointsHostingTests.ARunTimeError_AnswersInternalServerError_WithTheErrorsNumberAndCode`|
-|A refused request answers `503`|`RDWebEndpointsHostingTests.AMachineThatRefusesTheRequest_AnswersServiceUnavailable`|
+|A refused request answers `503`, with when to retry|`RDWebEndpointsHostingTests.ARefusedRequest_AnswersServiceUnavailable_WithWhenToRetry`|
 |A procedure not found, halted, or not implemented answers `500` with problem details|`RDWebEndpointsHostingTests.AProcedureThatDoesNotComplete_AnswersInternalServerError`|

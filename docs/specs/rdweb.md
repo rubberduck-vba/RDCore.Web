@@ -52,11 +52,11 @@ A section not yet written is listed without a link.
   - [5.1 Returned Values](rdweb.5.0.responses.md#51-returned-values)
   - [5.2 Run-time Errors](rdweb.5.0.responses.md#52-run-time-errors)
   - [5.3 Other Outcomes](rdweb.5.0.responses.md#53-other-outcomes)
-- 6.0 Machines
-  - 6.1 The Machine Pool
-- 7.0 Hosting
-  - 7.1 Mapping Endpoints
-  - 7.2 The RDCore.Web Host
+- [6.0 Machines](rdweb.6.0.machines.md)
+  - [6.1 The Machine Pool](rdweb.6.0.machines.md#61-the-machine-pool)
+- [7.0 Hosting](rdweb.7.0.hosting.md)
+  - [7.1 Mapping Endpoints](rdweb.7.0.hosting.md#71-mapping-endpoints)
+  - [7.2 The RDCore.Web Host](rdweb.7.0.hosting.md#72-the-rdcoreweb-host)
 - [8.0 JSON Values](rdweb.8.0.json-values.md)
   - [8.1 From VBA to JSON](rdweb.8.0.json-values.md#81-from-vba-to-json)
   - [8.2 From JSON to VBA](rdweb.8.0.json-values.md#82-from-json-to-vba)

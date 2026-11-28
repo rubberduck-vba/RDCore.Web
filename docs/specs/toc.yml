@@ -8,5 +8,9 @@
   href: rdweb.4.0.binding.md
 - name: "5.0 Responses"
   href: rdweb.5.0.responses.md
+- name: "6.0 Machines"
+  href: rdweb.6.0.machines.md
+- name: "7.0 Hosting"
+  href: rdweb.7.0.hosting.md
 - name: "8.0 JSON Values"
   href: rdweb.8.0.json-values.md
