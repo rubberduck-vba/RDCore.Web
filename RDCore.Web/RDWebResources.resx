@@ -81,6 +81,9 @@
   <data name="Endpoint_NewMachineIsNotKept" xml:space="preserve">
     <value>{0}.{1} makes a machine with &apos;@NewMachine, and its controller has no &apos;@KeptMachine.</value>
   </data>
+  <data name="Endpoint_PredeclaredController" xml:space="preserve">
+    <value>The controller {0} has a default instance (Attribute VB_PredeclaredId = True), and a default instance never handles a request. A predeclared controller needs a factory that makes the instance that does, and RDCore.Web makes no controller through a factory. Set VB_PredeclaredId to False.</value>
+  </data>
   <data name="Hosting_NoKeptMachines" xml:space="preserve">
     <value>The endpoint {0} {1} of {2}.{3} keeps a machine for each key, and no registry of kept machines was given.</value>
   </data>

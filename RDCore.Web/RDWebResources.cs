@@ -17,6 +17,7 @@ internal static class RDWebResources
     public static string KeptMachines_InvalidLimit => Get(nameof(KeptMachines_InvalidLimit));
     public static string Endpoint_KeptMachineKeyIsNoRouteParameter => Get(nameof(Endpoint_KeptMachineKeyIsNoRouteParameter));
     public static string Endpoint_NewMachineIsNotKept => Get(nameof(Endpoint_NewMachineIsNotKept));
+    public static string Endpoint_PredeclaredController => Get(nameof(Endpoint_PredeclaredController));
     public static string Hosting_NoKeptMachines => Get(nameof(Hosting_NoKeptMachines));
     public static string Problem_NoMachine => Get(nameof(Problem_NoMachine));
     public static string Problem_MachineAlreadyMade => Get(nameof(Problem_MachineAlreadyMade));

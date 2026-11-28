@@ -1,0 +1,23 @@
+# Dependabot opens pull requests each week for the packages and actions of RDCore.Web that have a newer version: one per group below, and one per
+# package otherwise. The RDCore.* packages are left out: their versions move with an RDCore release, in Directory.Build.props.
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      - dependency-name: "RDCore.*"
+    groups:
+      microsoft-extensions:
+        patterns:
+          - "Microsoft.Extensions.*"
+          - "Microsoft.AspNetCore.*"
+      mstest:
+        patterns:
+          - "MSTest*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

@@ -1,10 +1,11 @@
 name: Build and Test
 
+# every push and pull request, and each Monday: an advisory published after the last push shows on main within a week.
 on:
  push:
-  branches: [main]
  pull_request:
-  branches: [main]
+ schedule:
+  - cron: '17 6 * * 1'
 
 permissions:
  contents: read
@@ -24,8 +25,13 @@ jobs:
      with:
       dotnet-version: 11.0
 
+   # restore audits every package, the transitive ones included, against nuget.org's advisories of every severity (Directory.Build.props): in CI each
+   # vulnerable package is an error NU1901-NU1904 that names it, its version and its advisory, and the run stops here. It needs no repository setting.
+   - name: Vulnerable packages
+     run: dotnet restore RDCore.Web.slnx --force-evaluate
+
    - name: Build (Debug)
-     run: dotnet build RDCore.Web.slnx --configuration Debug
+     run: dotnet build RDCore.Web.slnx --configuration Debug --no-restore
 
    - name: Test (Debug)
      run: dotnet test RDCore.Web.slnx --configuration Debug --no-build --verbosity normal --blame-hang-timeout 10m

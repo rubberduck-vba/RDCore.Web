@@ -61,11 +61,17 @@ The argument is a string literal: the route that prefixes the routes of the modu
 |`'@Controller("api/orders")`|`api/orders`.|
 |`'@Controller` with no argument|The conventional route: the module's name less a `Controller` suffix ([§3.1](rdweb.3.0.routes.md#31-controller-routes)).|
 
+A class module with a default instance (`Attribute VB_PredeclaredId = True`,
+[**MS-VBAL §5.2.4.1.2** Default Instance Variables Static Semantics](https://learn.microsoft.com/openspecs/microsoft_general_purpose_programming_languages/ms-vbal/189fb41b-cc3a-4999-a6d2-ba89f72d2870))
+whose procedures serve endpoints is an error: `Read` throws `RDWebEndpointException`, whose message names the module. A default instance never handles a
+request. A controller is a class module whose `VB_PredeclaredId` is `False`, or a standard module.
+
 ### Implementation
 
 |Type or member|Role|
 |---|---|
 |[`RDWebAnnotations.Controller`](xref:RDCore.Web.Endpoints.RDWebAnnotations.Controller)|The annotation's name.|
+|[`RDWebEndpointReader.Read`](xref:RDCore.Web.Endpoints.RDWebEndpointReader.Read*)|Refuses a controller with a default instance.|
 |[`RDWebEndpoint.FromAnnotation`](xref:RDCore.Web.Endpoints.RDWebEndpoint.FromAnnotation*)|Takes the argument as `controllerRoute`; `null` when the annotation writes none.|
 
 ---
@@ -248,6 +254,7 @@ An annotation of any other name declares no endpoint: `FromAnnotation` returns `
 |A `'@FromBody` the `POST` cannot bind is an error|`RDWebEndpointTests.AFromBodyParameterThePostCannotBind_IsAnEndpointException_NamingIt`|
 |The body binds the parameter `'@FromBody` names; the query string binds the others|`RDWebEndpointsHostingTests.APostedJsonBody_BindsTheParameterFromBodyNames_AndTheQueryStringStillBindsTheOthers`|
 |A module is read: a controller's procedures are its endpoints|`RDWebEndpointReaderTests.AnHttpGetProcedureOfAController_IsAnEndpoint_OnTheControllersRouteAndItsOwn`, `RDWebEndpointReaderTests.AModuleThatIsNoController_DeclaresNoEndpoint`|
+|A controller with a default instance is an error; a predeclared class that is not a controller is not|`RDWebEndpointReaderTests.AControllerWithADefaultInstance_IsAnEndpointException_ThatNamesTheModule`, `RDWebEndpointReaderTests.AControllerWhosePredeclaredIdIsFalse_ServesItsEndpoints`, `RDWebEndpointReaderTests.AClassWithADefaultInstanceThatIsNoController_DeclaresNoEndpoint_AndIsNoError`|
 |`'@Controller` only in the declarations section, or above a block's header|`RDWebEndpointReaderTests.AControllerAnnotationAfterTheFirstProcedure_DoesNotMakeTheModuleAController`, `RDWebEndpointReaderTests.InAFileOfBlocks_AControllerAnnotationAboveABlocksHeader_MakesThatBlocksModuleAController`|
 |Only a public `Sub` or `Function` serves an endpoint|`RDWebEndpointReaderTests.AProcedureThatIsNotPublic_ServesNoEndpoint`, `RDWebEndpointReaderTests.AProcedureWithAnImplicitAccessModifier_IsPublic_AndASubServesAnEndpointToo`|
 |One endpoint per HTTP method annotation, in the order written|`RDWebEndpointReaderTests.EachHttpMethodAnnotationOfAProcedure_IsAnEndpoint_InTheOrderWritten_AndOtherAnnotationsAreNone`|

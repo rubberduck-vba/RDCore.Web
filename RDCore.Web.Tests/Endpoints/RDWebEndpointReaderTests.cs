@@ -2,6 +2,7 @@ using RDCore.SDK.Model;
 using RDCore.SDK.Model.AST;
 using RDCore.SDK.Model.AST.Abstract;
 using RDCore.SDK.Model.AST.Declarations;
+using RDCore.SDK.Model.AST.Directives;
 using RDCore.SDK.Model.AST.Expressions;
 using RDCore.SDK.Model.Source;
 using RDCore.SDK.Model.Values.Intrinsic;
@@ -164,6 +165,35 @@ public sealed class RDWebEndpointReaderTests
             Annotated(0, RDWebAnnotations.Controller, "api"), Annotated(1, RDWebAnnotations.HttpGet, "hello"), Annotated(2, RDWebAnnotations.NewMachine));
 
         Assert.ThrowsExactly<RDWebEndpointException>(() => RDWebEndpointReader.Read(parse, "Greetings"));
+    }
+
+    private static AttributeDirectiveNode PredeclaredId(string value) => new(Id(), Lines(0, 0), "VB_PredeclaredId", value);
+
+    [TestMethod]
+    public void AControllerWithADefaultInstance_IsAnEndpointException_ThatNamesTheModule()
+    {
+        var parse = Parse([PredeclaredId("True"), Procedure("Hello", 3, 6)],
+            Annotated(1, RDWebAnnotations.Controller, "api"), Annotated(2, RDWebAnnotations.HttpGet, "hello"));
+
+        var exception = Assert.ThrowsExactly<RDWebEndpointException>(() => RDWebEndpointReader.Read(parse, "Greetings"));
+        StringAssert.Contains(exception.Message, "Greetings");
+    }
+
+    [TestMethod]
+    public void AControllerWhosePredeclaredIdIsFalse_ServesItsEndpoints()
+    {
+        var parse = Parse([PredeclaredId("False"), Procedure("Hello", 3, 6)],
+            Annotated(1, RDWebAnnotations.Controller, "api"), Annotated(2, RDWebAnnotations.HttpGet, "hello"));
+
+        Assert.AreEqual("/api/hello", RDWebEndpointReader.Read(parse, "Greetings").Single().Route);
+    }
+
+    [TestMethod]
+    public void AClassWithADefaultInstanceThatIsNoController_DeclaresNoEndpoint_AndIsNoError()
+    {
+        var parse = Parse([PredeclaredId("True"), Procedure("Create", 3, 6)]);
+
+        Assert.IsEmpty(RDWebEndpointReader.Read(parse, "Greetings"));
     }
 
     [TestMethod]
