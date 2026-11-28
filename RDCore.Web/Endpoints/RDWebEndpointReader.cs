@@ -3,6 +3,7 @@ using RDCore.SDK.Model.AST;
 using RDCore.SDK.Model.AST.Abstract;
 using RDCore.SDK.Model.AST.Declarations;
 using System.Collections.Immutable;
+using System.Globalization;
 
 namespace RDCore.Web.Endpoints;
 
@@ -26,10 +27,20 @@ public static class RDWebEndpointReader
     /// <c>Private</c> or <c>Friend</c> procedure serves no endpoint.
     /// </returns>
     /// <exception cref="RDWebEndpointException">
-    /// An annotation declares an endpoint that cannot be served (<see cref="RDWebEndpoint.FromAnnotation"/>).
+    /// An annotation declares an endpoint that cannot be served (<see cref="RDWebEndpoint.FromAnnotation"/>), or the module is a class with a default
+    /// instance (<c>Attribute VB_PredeclaredId = True</c>, <strong>MS-VBAL §5.2.4.1.2</strong>) that serves an endpoint: a default instance never handles a
+    /// request.
     /// </exception>
     public static ImmutableArray<RDWebEndpoint> Read(ModuleParseResult parse, string moduleName)
-        => [.. Actions(parse, moduleName).SelectMany(action => action.Annotations.Select(action.EndpointOf))];
+    {
+        var actions = Actions(parse, moduleName).ToImmutableArray();
+        if (actions.Length > 0 && parse.SyntaxTree!.IsPredeclared())
+        {
+            throw new RDWebEndpointException(string.Format(CultureInfo.CurrentUICulture, RDWebResources.Endpoint_PredeclaredController, moduleName));
+        }
+
+        return [.. actions.SelectMany(action => action.Annotations.Select(action.EndpointOf))];
+    }
 
     // each public procedure of a controller module that an HTTP method annotation serves, in the order they are written; none for a module that is not a
     // controller. What the host serves and what the diagnostics say of an action are both read here.

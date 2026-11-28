@@ -81,6 +81,9 @@
   <data name="Endpoint_NewMachineIsNotKept" xml:space="preserve">
     <value>{0}.{1} crée une machine avec &apos;@NewMachine, et son contrôleur n&apos;a pas de &apos;@KeptMachine.</value>
   </data>
+  <data name="Endpoint_PredeclaredController" xml:space="preserve">
+    <value>Le contrôleur {0} a une instance par défaut (Attribute VB_PredeclaredId = True), et une instance par défaut ne traite jamais une requête. Un contrôleur prédéclaré a besoin d&apos;une fabrique qui crée l&apos;instance qui la traite, et RDCore.Web ne crée aucun contrôleur au moyen d&apos;une fabrique. Mettez VB_PredeclaredId à False.</value>
+  </data>
   <data name="Hosting_NoKeptMachines" xml:space="preserve">
     <value>Le point de terminaison {0} {1} de {2}.{3} garde une machine par clé, et aucun registre de machines gardées n&apos;a été donné.</value>
   </data>
