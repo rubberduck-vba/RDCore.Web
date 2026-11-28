@@ -1,5 +1,5 @@
-# Dependabot opens a pull request each week for each package and action of RDCore.Web that has a newer version. RDCore.SDK is left out: its version moves
-# with an RDCore release, in Directory.Build.props.
+# Dependabot opens pull requests each week for the packages and actions of RDCore.Web that have a newer version: one per group below, and one per
+# package otherwise. The RDCore.* packages are left out: their versions move with an RDCore release, in Directory.Build.props.
 version: 2
 updates:
   - package-ecosystem: nuget
