@@ -2,3 +2,5 @@
   href: rdw00001.md
 - name: "RDW00002: Several body parameters"
   href: rdw00002.md
+- name: "RDW00003: Member not round-tripped"
+  href: rdw00003.md

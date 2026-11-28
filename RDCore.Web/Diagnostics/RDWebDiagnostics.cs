@@ -27,4 +27,10 @@ public static class RDWebDiagnostics
     /// <c>RDW00002</c>: a parameter of an action that takes a body is bound by neither the route nor the body (<see cref="SeveralBodyParametersAnalyzer"/>).
     /// </summary>
     public static RDCoreDiagnosticCode SeveralBodyParameters { get; } = new(Prefix, 2);
+
+    /// <summary>
+    /// <c>RDW00003</c>: a member of the class an action's body or returned value is an object of does not come back as it went out through JSON
+    /// (<see cref="MemberNotRoundTrippedAnalyzer"/>).
+    /// </summary>
+    public static RDCoreDiagnosticCode MemberNotRoundTripped { get; } = new(Prefix, 3);
 }

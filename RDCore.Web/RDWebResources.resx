@@ -63,4 +63,13 @@
   <data name="SeveralBodyParameters_Message" xml:space="preserve">
     <value>'{0}' binds from the query string: the request body of {2} binds to '{1}' only.</value>
   </data>
+  <data name="MemberNotRoundTripped_Message" xml:space="preserve">
+    <value>'{0}' does not come back as it goes out through JSON: {1}.</value>
+  </data>
+  <data name="MemberNotRoundTripped_ReadOnly" xml:space="preserve">
+    <value>{0} is written out and never read back</value>
+  </data>
+  <data name="MemberNotRoundTripped_Dictionary" xml:space="preserve">
+    <value>{0} is read back as a Dictionary when it holds an object</value>
+  </data>
 </root>

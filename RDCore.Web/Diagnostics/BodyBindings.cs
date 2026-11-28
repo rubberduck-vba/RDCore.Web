@@ -14,6 +14,13 @@ namespace RDCore.Web.Diagnostics;
 internal static class BodyBindings
 {
     public static IEnumerable<(ModuleParseResult Parse, RDWebAction Action, ImmutableArray<RDWebEndpoint> Endpoints)> Of(ModuleAnalysisContext context)
+        => Served(context)
+            .Select(served => (served.Parse, served.Action,
+                Endpoints: served.Endpoints.Where(endpoint => endpoint.BodyParameter is not null).ToImmutableArray()))
+            .Where(served => served.Endpoints.Length > 0);
+
+    // the actions of the document's controller modules that are served, each with the endpoints it is served on, whether they bind a body or not.
+    public static IEnumerable<(ModuleParseResult Parse, RDWebAction Action, ImmutableArray<RDWebEndpoint> Endpoints)> Served(ModuleAnalysisContext context)
     {
         var document = new RDCoreDocument(context.Document, context.ParseResult);
         foreach (var uri in document.ModuleUris)
@@ -25,8 +32,7 @@ internal static class BodyBindings
 
             foreach (var action in RDWebEndpointReader.Actions(parse, name))
             {
-                var endpoints = action.Annotations.Select(annotation => Served(action, annotation))
-                    .OfType<RDWebEndpoint>().Where(endpoint => endpoint.BodyParameter is not null).ToImmutableArray();
+                var endpoints = action.Annotations.Select(annotation => Served(action, annotation)).OfType<RDWebEndpoint>().ToImmutableArray();
                 if (endpoints.Length > 0)
                 {
                     yield return (parse, action, endpoints);

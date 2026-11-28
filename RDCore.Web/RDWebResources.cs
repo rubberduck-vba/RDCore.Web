@@ -27,4 +27,7 @@ internal static class RDWebResources
     public static string ImplicitBodyBinding_Message => Get(nameof(ImplicitBodyBinding_Message));
     public static string ImplicitBodyBinding_Fix => Get(nameof(ImplicitBodyBinding_Fix));
     public static string SeveralBodyParameters_Message => Get(nameof(SeveralBodyParameters_Message));
+    public static string MemberNotRoundTripped_Message => Get(nameof(MemberNotRoundTripped_Message));
+    public static string MemberNotRoundTripped_ReadOnly => Get(nameof(MemberNotRoundTripped_ReadOnly));
+    public static string MemberNotRoundTripped_Dictionary => Get(nameof(MemberNotRoundTripped_Dictionary));
 }

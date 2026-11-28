@@ -63,4 +63,13 @@
   <data name="SeveralBodyParameters_Message" xml:space="preserve">
     <value>'{0}' prend sa valeur dans la chaîne de requête : le corps de la requête de {2} n'est lié qu'à '{1}'.</value>
   </data>
+  <data name="MemberNotRoundTripped_Message" xml:space="preserve">
+    <value>'{0}' ne revient pas tel qu'il part en JSON : {1}.</value>
+  </data>
+  <data name="MemberNotRoundTripped_ReadOnly" xml:space="preserve">
+    <value>{0} est écrit, mais jamais relu</value>
+  </data>
+  <data name="MemberNotRoundTripped_Dictionary" xml:space="preserve">
+    <value>{0} est relu comme un Dictionary quand il contient un objet</value>
+  </data>
 </root>
