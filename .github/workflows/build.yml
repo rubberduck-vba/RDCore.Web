@@ -1,10 +1,11 @@
 name: Build and Test
 
+# every push and pull request, and each Monday: an advisory published after the last push shows on main within a week.
 on:
  push:
-  branches: [main]
  pull_request:
-  branches: [main]
+ schedule:
+  - cron: '17 6 * * 1'
 
 permissions:
  contents: read
@@ -24,8 +25,8 @@ jobs:
      with:
       dotnet-version: 11.0
 
-   # restore audits every package, the transitive ones included, against nuget.org's advisories (Directory.Build.props): each vulnerable package is an
-   # error NU1901-NU1904 that names it, its version and its advisory, and the run stops here. The fix is a version bump of the package.
+   # restore audits every package, the transitive ones included, against nuget.org's advisories of every severity (Directory.Build.props): in CI each
+   # vulnerable package is an error NU1901-NU1904 that names it, its version and its advisory, and the run stops here. It needs no repository setting.
    - name: Vulnerable packages
      run: dotnet restore RDCore.Web.slnx --force-evaluate
 
@@ -64,19 +65,3 @@ jobs:
        **/TestResults/**/*.dmp
       if-no-files-found: ignore
       retention-days: 3
-
- # a pull request that adds or bumps a package with a known vulnerability, of any severity, fails here. It needs the repository's dependency graph.
- dependency-review:
-  if: github.event_name == 'pull_request'
-  runs-on: ubuntu-latest
-  timeout-minutes: 10
-
-  steps:
-   - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-     with:
-      persist-credentials: false
-
-   - name: Dependency review
-     uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1
-     with:
-      fail-on-severity: low

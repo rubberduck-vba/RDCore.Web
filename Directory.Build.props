@@ -35,13 +35,21 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 
-  <!-- RDCore.Web ships with no known vulnerability in any package it uses: restore audits every package, the transitive ones included, against nuget.org's
-       advisories of every severity, and an advisory (NU1901 low to NU1904 critical) fails the build. The fix is a version bump of the package. -->
+  <!-- restore audits every package, the transitive ones included, against nuget.org's advisories of every severity: an advisory is NU1901 (low) to NU1904
+       (critical), naming the package, its version and the advisory. The fix is a version bump of the package. -->
   <PropertyGroup>
     <NuGetAudit>true</NuGetAudit>
     <NuGetAuditMode>all</NuGetAuditMode>
     <NuGetAuditLevel>low</NuGetAuditLevel>
+  </PropertyGroup>
+
+  <!-- in CI (GitHub Actions sets GITHUB_ACTIONS), RDCore.Web ships with no known vulnerability in any package it uses, and an advisory fails the build.
+       Elsewhere it is a warning, which a build reports without failing: an advisory published after a commit is news of a package, not of the code. -->
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
     <WarningsAsErrors>$(WarningsAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsAsErrors>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' != 'true'">
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
   </PropertyGroup>
 
 </Project>
