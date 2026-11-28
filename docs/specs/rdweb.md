@@ -61,6 +61,8 @@ A section not yet written is listed without a link.
   - [8.1 From VBA to JSON](rdweb.8.0.json-values.md#81-from-vba-to-json)
   - [8.2 From JSON to VBA](rdweb.8.0.json-values.md#82-from-json-to-vba)
   - [8.3 Arguments](rdweb.8.0.json-values.md#83-arguments)
+  - [8.4 Objects](rdweb.8.0.json-values.md#84-objects)
+  - [8.5 The RDJson Library](rdweb.8.0.json-values.md#85-the-rdjson-library)
 
 |Section|Covers|
 |---|---|
@@ -71,7 +73,7 @@ A section not yet written is listed without a link.
 |5.0|The response each outcome of the procedure answers: a value, no value, a run-time error, and any other outcome.|
 |6.0|The machines that run the procedures, and the pool that gives each request one of its own.|
 |7.0|How an ASP.NET Core application maps the endpoints, and the host that serves the application's pages.|
-|8.0|How a procedure's arguments and returned value convert between VBA and JSON.|
+|8.0|How a procedure's arguments and returned value convert between VBA and JSON, objects of the workspace's classes included, and the `RDJson` library that VBA code converts its own values with.|
 
 ---
 ## Conventions

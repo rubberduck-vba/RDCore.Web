@@ -38,6 +38,7 @@ End Function
 |Les diagnostics : un `POST` qui ne nomme aucun paramètre de corps, et chaque autre paramètre que ne lient ni sa route ni son corps|Fonctionne dans une plateforme RDCore qui charge l'extension RDWeb, avec un correctif rapide qui ajoute `'@FromBody`.|
 |Les réponses : la valeur de la procédure en JSON, aucune valeur, une erreur d'exécution en corps « problem details »|Fonctionne.|
 |Un bassin de machines, chacune n'exécutant qu'une requête à la fois|Fonctionne.|
+|Les valeurs JSON : les objets des classes de l'espace de travail, les tableaux typés et `Collection`, et la bibliothèque `RDJson` pour le code VBA|Fonctionne dans l'environnement d'exécution de RDCore. Aucun point de terminaison n'y parvient : voir la note ci-dessous.|
 |L'hôte : une page qui appelle un point de terminaison et affiche sa réponse|Fonctionne. L'hôte n'associe aucun point de terminaison.|
 
 > [!NOTE]
