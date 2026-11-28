@@ -62,7 +62,7 @@ A section not yet written is listed without a link.
   - [8.2 From JSON to VBA](rdweb.8.0.json-values.md#82-from-json-to-vba)
   - [8.3 Arguments](rdweb.8.0.json-values.md#83-arguments)
   - [8.4 Objects](rdweb.8.0.json-values.md#84-objects)
-  - [8.5 The RDJson Library](rdweb.8.0.json-values.md#85-the-rdjson-library)
+  - [8.5 The RDJson library](rdweb.8.0.json-values.md#85-the-rdjson-library)
 
 |Section|Covers|
 |---|---|

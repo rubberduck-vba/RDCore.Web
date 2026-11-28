@@ -123,7 +123,7 @@ A key or a member that does not match is handled by default as the table says. A
 |A member that can be given a value and that no key names|Keeps its value.|`MissingMembers`|449 (Argument not optional).|
 
 The keys are checked before any member is given a value, so a JSON object that raises changes nothing. The options hold for the objects of members too.
-A procedure's arguments are always filled with the defaults.
+A procedure's arguments are always filled with the default of each case.
 
 ---
 ## 8.5 The RDJson library
@@ -138,7 +138,7 @@ finds it by its name.
 |`JsonSerializationOptions`|A class whose `UnknownMembers`, `MissingMembers` and `ReadOnlyMembers` are each a `JsonMemberHandling`, `jsonIgnore` in a new object ([8.4](#84-objects)). Any other value is error 380 (Invalid property value).|
 |`JsonMemberHandling`|An enumeration: `jsonIgnore` (0) or `jsonRaise` (1).|
 
-`Deserialize` with an object the program already has patches it: only the members the JSON names change, and the others keep their values. For a class
+`Deserialize` with an object the program has patches it: only the members the JSON names change, and the others keep their values. For a class
 `Order` that declares `Public Note As String`:
 
 ```vba
@@ -147,10 +147,10 @@ Public Function Rushed(ByVal body As String) As String
     Set options = New JsonSerializationOptions
     options.UnknownMembers = jsonRaise
 
-    Dim order As Order
-    Set order = JsonValue.Deserialize(body, New Order, options)
-    Set order = JsonValue.Deserialize("{""Note"":""Rush""}", order)
-    Rushed = JsonValue.Serialize(order)
+    Dim placed As Order
+    Set placed = JsonValue.Deserialize(body, New Order, options)
+    Set placed = JsonValue.Deserialize("{""Note"":""Rush""}", placed)
+    Rushed = JsonValue.Serialize(placed)
 End Function
 ```
 
