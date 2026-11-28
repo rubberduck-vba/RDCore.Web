@@ -24,8 +24,13 @@ jobs:
      with:
       dotnet-version: 11.0
 
+   # restore audits every package, the transitive ones included, against nuget.org's advisories (Directory.Build.props): each vulnerable package is an
+   # error NU1901-NU1904 that names it, its version and its advisory, and the run stops here. The fix is a version bump of the package.
+   - name: Vulnerable packages
+     run: dotnet restore RDCore.Web.slnx --force-evaluate
+
    - name: Build (Debug)
-     run: dotnet build RDCore.Web.slnx --configuration Debug
+     run: dotnet build RDCore.Web.slnx --configuration Debug --no-restore
 
    - name: Test (Debug)
      run: dotnet test RDCore.Web.slnx --configuration Debug --no-build --verbosity normal --blame-hang-timeout 10m
@@ -59,3 +64,19 @@ jobs:
        **/TestResults/**/*.dmp
       if-no-files-found: ignore
       retention-days: 3
+
+ # a pull request that adds or bumps a package with a known vulnerability, of any severity, fails here. It needs the repository's dependency graph.
+ dependency-review:
+  if: github.event_name == 'pull_request'
+  runs-on: ubuntu-latest
+  timeout-minutes: 10
+
+  steps:
+   - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+     with:
+      persist-credentials: false
+
+   - name: Dependency review
+     uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1
+     with:
+      fail-on-severity: low

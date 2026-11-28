@@ -1,0 +1,23 @@
+# Dependabot opens a pull request each week for each package and action of RDCore.Web that has a newer version. RDCore.SDK is left out: its version moves
+# with an RDCore release, in Directory.Build.props.
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      - dependency-name: "RDCore.*"
+    groups:
+      microsoft-extensions:
+        patterns:
+          - "Microsoft.Extensions.*"
+          - "Microsoft.AspNetCore.*"
+      mstest:
+        patterns:
+          - "MSTest*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
