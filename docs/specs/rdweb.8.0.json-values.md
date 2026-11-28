@@ -59,6 +59,7 @@ A parameter of another declared type receives the following.
 |`Date`|A string is read as ISO 8601 to the second, with no offset. Any other string is error 13: one with a zone or an offset, or a date alone.|
 |`Currency`, `Decimal`|A number is read from its digits, so none is lost to a `Double`, then let-coerced.|
 |Another numeric type, `Boolean`, `String`|The natural value, let-coerced ([**RD-VBAL §5.5.1.2** Runtime semantics](https://rubberduck-vba.github.io/RDCore/specs/rd-vbal.5.5.1.2.runtime-semantics.html)): error 13 for text that is not a number, error 6 (Overflow) past the type's range.|
+|An `Enum`|As a `Long`, since an `Enum` member is a `Long` ([**MS-VBAL §5.2.3.4** Enum Declarations](https://learn.microsoft.com/en-us/openspecs/microsoft_general_purpose_programming_languages/ms-vbal/da1d4885-946f-4937-9487-488143b97f08)).|
 |Any other type, such as an array of another element type or a UDT|Error 13.|
 
 `null` to any type other than `Variant` or an object type is let-coercion from `Null`
@@ -70,16 +71,17 @@ A nested JSON array is not read as a multi-dimensional array: its rows may diffe
 ---
 ## 8.3 Arguments
 
-The procedure is a `Public` `Sub`, `Function` or `Property Get`, named with its module. Arguments are named, and names match parameters case-insensitively,
-as VBA names do ([**MS-VBAL §5.3.1.11** Procedure Invocation Argument Processing](https://learn.microsoft.com/en-us/openspecs/microsoft_general_purpose_programming_languages/ms-vbal/1fb9af32-fc48-4c4f-998a-ed8047048ca5)).
+The procedure is a `Public` `Sub`, `Function` or `Property Get` of a standard module, named with its module. Arguments are named, and names match
+parameters case-insensitively, as VBA names do ([**MS-VBAL §5.3.1.11** Procedure Invocation Argument Processing](https://learn.microsoft.com/en-us/openspecs/microsoft_general_purpose_programming_languages/ms-vbal/1fb9af32-fc48-4c4f-998a-ed8047048ca5)).
 
 |Situation|Run-time error, before the procedure runs|
 |---|---|
-|An argument names no parameter, or two name the same one in different cases|448 (Named argument not found).|
+|An argument names no parameter or names the `ParamArray`, or two name the same one in different cases|448 (Named argument not found).|
 |A parameter that is not `Optional` has no argument|449 (Argument not optional).|
 |An argument does not convert to its parameter's type|The error of its conversion, above.|
 
-An `Optional` parameter without an argument takes its default value, or is missing when it is a `Variant` with no default.
+An `Optional` parameter without an argument takes its default value, or is missing when it is a `Variant` with no default. A `ParamArray` is given no
+arguments.
 
 ---
 ## Implementation
