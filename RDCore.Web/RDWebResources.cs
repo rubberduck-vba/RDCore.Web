@@ -14,6 +14,13 @@ internal static class RDWebResources
     public static string Endpoint_RouteParameterIsNoParameter => Get(nameof(Endpoint_RouteParameterIsNoParameter));
     public static string Pool_InvalidSize => Get(nameof(Pool_InvalidSize));
     public static string Pool_InvalidLimit => Get(nameof(Pool_InvalidLimit));
+    public static string KeptMachines_InvalidLimit => Get(nameof(KeptMachines_InvalidLimit));
+    public static string Endpoint_KeptMachineKeyIsNoRouteParameter => Get(nameof(Endpoint_KeptMachineKeyIsNoRouteParameter));
+    public static string Endpoint_NewMachineIsNotKept => Get(nameof(Endpoint_NewMachineIsNotKept));
+    public static string Hosting_NoKeptMachines => Get(nameof(Hosting_NoKeptMachines));
+    public static string Problem_NoMachine => Get(nameof(Problem_NoMachine));
+    public static string Problem_MachineAlreadyMade => Get(nameof(Problem_MachineAlreadyMade));
+    public static string Problem_MachinesFull => Get(nameof(Problem_MachinesFull));
     public static string Pool_NoMachineInTime => Get(nameof(Pool_NoMachineInTime));
     public static string Pool_MachineDidNotStop => Get(nameof(Pool_MachineDidNotStop));
     public static string Endpoint_BodyIsNoParameter => Get(nameof(Endpoint_BodyIsNoParameter));

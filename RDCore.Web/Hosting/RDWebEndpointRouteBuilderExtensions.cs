@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using RDCore.Web.Endpoints;
 using RDCore.Web.Machines;
+using System.Globalization;
 
 namespace RDCore.Web.Hosting;
 
@@ -30,13 +31,50 @@ public static class RDWebEndpointRouteBuilderExtensions
     /// runs.</item>
     /// </list>
     /// </remarks>
+    /// <exception cref="ArgumentException">An endpoint keeps a machine for each key (<see cref="RDWebEndpoint.KeptMachineKey"/>).</exception>
     public static IEndpointConventionBuilder MapRDWebEndpoints(this IEndpointRouteBuilder routes, IEnumerable<RDWebEndpoint> endpoints,
         RDWebMachinePool pool)
+        => routes.MapRDWebEndpoints(endpoints, pool, keptMachines: null);
+
+    /// <summary>
+    /// Maps each endpoint to its route and HTTP method, served by the procedure that declares it: on a machine of the pool, or on the kept machine of its
+    /// key for an endpoint of a controller that has <c>'@KeptMachine</c>.
+    /// </summary>
+    /// <param name="routes">The application's routes.</param>
+    /// <param name="endpoints">The endpoints the application's controller modules declare.</param>
+    /// <param name="pool">The machines that run the procedures of the endpoints that keep none.</param>
+    /// <param name="keptMachines">
+    /// The machines kept for the keys of the endpoints that keep them; <see langword="null"/> when no endpoint does.
+    /// </param>
+    /// <returns>A builder of the conventions of every endpoint mapped, such as an authorization policy.</returns>
+    /// <remarks>
+    /// A request to an endpoint that keeps machines is answered as a request to the pool is, and also:
+    /// <list type="bullet">
+    /// <item><c>404</c> with a problem details body when its key has no machine, and the endpoint does not make one;</item>
+    /// <item><c>409</c> when the endpoint makes a machine (<c>'@NewMachine</c>), and its key has one already;</item>
+    /// <item><c>503</c> with a <c>Retry-After</c> of one second when it would make one more machine than
+    /// <see cref="RDWebKeptMachinesOptions.MaxMachines"/>;</item>
+    /// <item><c>204</c> when the procedure ends its machine with an <c>End</c> statement.</item>
+    /// </list>
+    /// </remarks>
+    /// <exception cref="ArgumentException">
+    /// An endpoint keeps a machine for each key (<see cref="RDWebEndpoint.KeptMachineKey"/>), and <paramref name="keptMachines"/> is
+    /// <see langword="null"/>.
+    /// </exception>
+    public static IEndpointConventionBuilder MapRDWebEndpoints(this IEndpointRouteBuilder routes, IEnumerable<RDWebEndpoint> endpoints,
+        RDWebMachinePool pool, RDWebKeptMachines? keptMachines)
     {
-        var group = routes.MapGroup(string.Empty);
-        foreach (var endpoint in endpoints)
+        var all = endpoints.ToArray();
+        if (keptMachines is null && all.FirstOrDefault(endpoint => endpoint.KeptMachineKey is not null) is { } kept)
         {
-            group.MapMethods(endpoint.Route, [endpoint.HttpMethod], context => RDWebRequests.ServeAsync(context, endpoint, pool))
+            throw new ArgumentException(string.Format(CultureInfo.CurrentUICulture, RDWebResources.Hosting_NoKeptMachines, kept.HttpMethod, kept.Route,
+                kept.ModuleName, kept.ProcedureName), nameof(keptMachines));
+        }
+
+        var group = routes.MapGroup(string.Empty);
+        foreach (var endpoint in all)
+        {
+            group.MapMethods(endpoint.Route, [endpoint.HttpMethod], context => RDWebRequests.ServeAsync(context, endpoint, pool, keptMachines))
                 .WithDisplayName($"{endpoint.HttpMethod} {endpoint.Route} ({endpoint.ModuleName}.{endpoint.ProcedureName})");
         }
 

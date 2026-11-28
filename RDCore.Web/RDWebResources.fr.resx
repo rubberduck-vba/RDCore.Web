@@ -24,6 +24,9 @@
   <data name="Pool_InvalidLimit" xml:space="preserve">
     <value>Un bassin de machines recycle une machine après au moins une requête, et chacun de ses délais est positif.</value>
   </data>
+  <data name="KeptMachines_InvalidLimit" xml:space="preserve">
+    <value>Un registre de machines gardées contient au moins une machine, et chacun de ses délais est positif.</value>
+  </data>
   <data name="Pool_NoMachineInTime" xml:space="preserve">
     <value>Aucune machine n'était libre avant l'échéance de la requête.</value>
   </data>
@@ -71,5 +74,23 @@
   </data>
   <data name="MemberNotRoundTripped_Dictionary" xml:space="preserve">
     <value>{0} est relu comme un Dictionary quand il contient un objet</value>
+  </data>
+  <data name="Endpoint_KeptMachineKeyIsNoRouteParameter" xml:space="preserve">
+    <value>La clé de machine &apos;{0}&apos; que &apos;@KeptMachine nomme pour {1}.{2} n&apos;est pas un paramètre de sa route.</value>
+  </data>
+  <data name="Endpoint_NewMachineIsNotKept" xml:space="preserve">
+    <value>{0}.{1} crée une machine avec &apos;@NewMachine, et son contrôleur n&apos;a pas de &apos;@KeptMachine.</value>
+  </data>
+  <data name="Hosting_NoKeptMachines" xml:space="preserve">
+    <value>Le point de terminaison {0} {1} de {2}.{3} garde une machine par clé, et aucun registre de machines gardées n&apos;a été donné.</value>
+  </data>
+  <data name="Problem_NoMachine" xml:space="preserve">
+    <value>Il n&apos;y a aucune machine pour la clé &apos;{0}&apos;.</value>
+  </data>
+  <data name="Problem_MachineAlreadyMade" xml:space="preserve">
+    <value>La clé &apos;{0}&apos; a déjà une machine.</value>
+  </data>
+  <data name="Problem_MachinesFull" xml:space="preserve">
+    <value>Aucune autre machine ne peut être gardée.</value>
   </data>
 </root>

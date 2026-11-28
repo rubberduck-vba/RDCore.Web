@@ -116,4 +116,48 @@ public sealed class RDWebEndpointTests
     [TestMethod]
     public void AGet_BindsNoBody_WhateverFromBodyNames()
         => Assert.IsNull(DeclareWithBody(RDWebAnnotations.HttpGet, "customer")!.BodyParameter);
+
+    private static RDWebEndpoint Kept(string annotation, string route, string key, bool makesMachine, params string[] parameters)
+        => RDWebEndpoint.FromAnnotation("GamesController", "api/games", "Play", parameters, annotation, route, keptMachineKey: key,
+            makesMachine: makesMachine)!;
+
+    [TestMethod]
+    public void TheMachinesKey_NeedNotBeAParameterOfTheProcedure_AndThePostBodyBindsTheFirstParameterAfterIt()
+    {
+        var endpoint = Kept(RDWebAnnotations.HttpPost, "{game}/ready", "game", false, "picks");
+
+        Assert.AreEqual("game", endpoint.KeptMachineKey);
+        Assert.IsFalse(endpoint.MakesMachine);
+        Assert.AreEqual(0, endpoint.RouteParameters.Length);
+        Assert.AreEqual("picks", endpoint.BodyParameter);
+    }
+
+    [TestMethod]
+    public void TheMachinesKey_BindsTheProcedureParameterOfItsName_WhenTheProcedureHasOne()
+        => CollectionAssert.AreEqual(new[] { "Game" }, Kept(RDWebAnnotations.HttpGet, "{GAME}/events", "game", false, "Game", "since").RouteParameters);
+
+    [TestMethod]
+    public void AnEndpointThatMakesTheMachine_SaysSo()
+        => Assert.IsTrue(Kept(RDWebAnnotations.HttpPost, "{game}/new", "game", true).MakesMachine);
+
+    [TestMethod]
+    public void AnotherRouteParameterOfAKeptMachinesEndpoint_StillNamesAParameterOfTheProcedure()
+    {
+        var error = Assert.ThrowsExactly<RDWebEndpointException>(() => Kept(RDWebAnnotations.HttpGet, "{game}/cells/{x}", "game", false));
+
+        StringAssert.Contains(error.Message, "'x'");
+    }
+
+    [TestMethod]
+    public void AMachinesKeyThatIsNoParameterOfTheRoute_IsAnEndpointException_NamingIt()
+    {
+        var error = Assert.ThrowsExactly<RDWebEndpointException>(() => Kept(RDWebAnnotations.HttpGet, "{id}", "game", false, "id"));
+
+        StringAssert.Contains(error.Message, "'game'");
+    }
+
+    [TestMethod]
+    public void AnEndpointThatMakesAMachine_WithNoKeyToMakeItFor_IsAnEndpointException()
+        => Assert.ThrowsExactly<RDWebEndpointException>(()
+            => RDWebEndpoint.FromAnnotation("GamesController", "api/games", "NewGame", [], RDWebAnnotations.HttpPost, "new", makesMachine: true));
 }

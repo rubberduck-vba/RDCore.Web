@@ -3,13 +3,13 @@ using Microsoft.AspNetCore.Http;
 namespace RDCore.Web.Endpoints;
 
 /// <summary>
-/// The comment annotations that declare the endpoints of an RD-VBA module: <c>'@Controller</c> on the module, <c>'@HttpGet</c> and <c>'@HttpPost</c> on
-/// its procedures.
+/// The comment annotations that declare the endpoints of an RD-VBA module: <c>'@Controller</c> and <c>'@KeptMachine</c> on the module, <c>'@HttpGet</c>,
+/// <c>'@HttpPost</c>, <c>'@FromBody</c> and <c>'@NewMachine</c> on its procedures.
 /// </summary>
 /// <remarks>
-/// They are RD-VBA comment annotations (<strong>RD-VBAL §3.0.1.1</strong>): to MS-VBA they are comments. <c>'@Controller</c> is a module annotation,
-/// written in the module's declarations section; <c>'@HttpGet</c> and <c>'@HttpPost</c> are member annotations, written immediately above the procedure.
-/// Each takes one optional string argument, its route template.
+/// They are RD-VBA comment annotations (<strong>RD-VBAL §3.0.1.1</strong>): to MS-VBA they are comments. <c>'@Controller</c> and <c>'@KeptMachine</c> are
+/// module annotations, written in the module's declarations section; the others are member annotations, written immediately above the procedure.
+/// <c>'@HttpGet</c> and <c>'@HttpPost</c> each take one optional string argument, their route template.
 /// </remarks>
 public static class RDWebAnnotations
 {
@@ -36,6 +36,21 @@ public static class RDWebAnnotations
     /// bind. It names a parameter because a parameter list holds no comment. A <c>GET</c> has no body, and binds none.
     /// </summary>
     public const string FromBody = "FromBody";
+
+    /// <summary>
+    /// The module annotation that keeps a machine for each value of a route parameter of a controller: <c>'@KeptMachine("game")</c>, written in the
+    /// declarations section with <c>'@Controller</c>. Its argument names the route parameter whose value is the machine's key. A request to an endpoint of
+    /// the controller runs on the machine of its key, which is never reset, instead of a machine of the pool (<see cref="Machines.RDWebKeptMachines"/>).
+    /// The route parameter binds to the procedure's parameter of its name, when the procedure has one.
+    /// </summary>
+    public const string KeptMachine = "KeptMachine";
+
+    /// <summary>
+    /// The member annotation that makes the machine of a request's key before the procedure runs on it: <c>'@NewMachine</c>, written immediately above
+    /// the procedure with its HTTP method annotations, in a controller that has <see cref="KeptMachine"/>. A request to any other endpoint of the
+    /// controller runs on the machine its key already has.
+    /// </summary>
+    public const string NewMachine = "NewMachine";
 
     /// <summary>
     /// The HTTP method a member annotation serves its procedure for.

@@ -11,13 +11,14 @@ using System.Text.Json.Nodes;
 
 namespace RDCore.Web.Hosting;
 
-// one request to an endpoint: its arguments bound, the procedure run on a machine of the pool, and its result written as the response.
+// one request to an endpoint: its arguments bound, the procedure run on a machine of the pool or on the kept machine of its key, and its result written as
+// the response.
 internal static class RDWebRequests
 {
     // how many seconds a refused request is asked to wait before it tries again: a refusal is the pool being busy, which a moment can change.
     private const string RetryAfterSeconds = "1";
 
-    public static async Task ServeAsync(HttpContext context, RDWebEndpoint endpoint, RDWebMachinePool pool)
+    public static async Task ServeAsync(HttpContext context, RDWebEndpoint endpoint, RDWebMachinePool pool, RDWebKeptMachines? keptMachines)
     {
         var request = context.Request;
         var arguments = ImmutableDictionary.CreateBuilder<string, JsonNode?>(StringComparer.OrdinalIgnoreCase);
@@ -56,7 +57,30 @@ internal static class RDWebRequests
         }
 
         var invocation = new ProgramInvocation(endpoint.ModuleName, endpoint.ProcedureName, arguments.ToImmutable());
-        var result = await pool.InvokeAsync(invocation, context.RequestAborted);
+        ProgramInvocationResult result;
+        if (endpoint.KeptMachineKey is { } keyName)
+        {
+            // the route matched, so it has the key: the endpoint's route has the parameter.
+            var key = Convert.ToString(request.RouteValues[keyName], CultureInfo.InvariantCulture) ?? string.Empty;
+            var answer = await keptMachines!.InvokeAsync(key, invocation, endpoint.MakesMachine, context.RequestAborted);
+            if (answer.Status is not RDWebKeptMachineStatus.Served)
+            {
+                if (answer.Status is RDWebKeptMachineStatus.Full)
+                {
+                    context.Response.Headers.RetryAfter = RetryAfterSeconds;
+                }
+
+                await ResponseOf(answer.Status, key).ExecuteAsync(context);
+                return;
+            }
+
+            result = answer.Result!;
+        }
+        else
+        {
+            result = await pool.InvokeAsync(invocation, context.RequestAborted);
+        }
+
         if (result.Outcome is ExecutionOutcome.Refused)
         {
             context.Response.Headers.RetryAfter = RetryAfterSeconds;
@@ -78,6 +102,8 @@ internal static class RDWebRequests
             detail: result.ErrorMessage,
             statusCode: StatusCodes.Status503ServiceUnavailable,
             title: RDWebResources.Problem_Refused),
+        // an End statement ends a kept machine, which is what the request asked for.
+        { Outcome: ExecutionOutcome.Halted } when endpoint.KeptMachineKey is not null => Results.NoContent(),
         { Outcome: ExecutionOutcome.NotFound } => Results.Problem(
             detail: result.ErrorMessage,
             statusCode: StatusCodes.Status500InternalServerError,
@@ -87,5 +113,17 @@ internal static class RDWebRequests
             statusCode: StatusCodes.Status500InternalServerError,
             title: string.Format(
                 CultureInfo.CurrentUICulture, RDWebResources.Problem_DidNotComplete, endpoint.ModuleName, endpoint.ProcedureName, result.Outcome)),
+    };
+
+    // a request that reached no kept machine.
+    private static IResult ResponseOf(RDWebKeptMachineStatus status, string key) => status switch
+    {
+        RDWebKeptMachineStatus.NoMachine => Results.Problem(
+            statusCode: StatusCodes.Status404NotFound,
+            title: string.Format(CultureInfo.CurrentUICulture, RDWebResources.Problem_NoMachine, key)),
+        RDWebKeptMachineStatus.AlreadyMade => Results.Problem(
+            statusCode: StatusCodes.Status409Conflict,
+            title: string.Format(CultureInfo.CurrentUICulture, RDWebResources.Problem_MachineAlreadyMade, key)),
+        _ => Results.Problem(statusCode: StatusCodes.Status503ServiceUnavailable, title: RDWebResources.Problem_MachinesFull),
     };
 }

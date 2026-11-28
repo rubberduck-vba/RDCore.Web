@@ -1,8 +1,8 @@
 # 2.0 Annotations
 
 An RDCore.Web application declares its endpoints with comment annotations. `'@Controller` makes a module a controller; `'@HttpGet` and `'@HttpPost`
-make a procedure of a controller an endpoint, and `'@FromBody` names the parameter a `POST` request's body binds to. They follow the comment annotation
-syntax of
+make a procedure of a controller an endpoint, and `'@FromBody` names the parameter a `POST` request's body binds to. `'@KeptMachine` keeps a machine
+for each key of a controller, and `'@NewMachine` makes it. They follow the comment annotation syntax of
 [**RD-VBAL §3.0.1.1** Comment Annotations Syntax](https://rubberduck-vba.github.io/RDCore/specs/rd-vbal.3.0.1.token-semantics.html#3011-comment-annotations-syntax):
 to VBA they are comments, so an annotated module compiles as it is.
 
@@ -17,6 +17,8 @@ to VBA they are comments, so an annotated module compiles as it is.
 |`'@HttpGet`|Member annotation|Immediately above the procedure.|The endpoint's route ([§3.2](rdweb.3.0.routes.md#32-endpoint-routes)). Optional.|
 |`'@HttpPost`|Member annotation|Immediately above the procedure.|The endpoint's route. Optional.|
 |`'@FromBody`|Member annotation|Immediately above the procedure, with its HTTP method annotations.|The body parameter's name ([§2.4](#24-frombody)).|
+|`'@KeptMachine`|Module annotation|With `'@Controller`.|The route parameter whose value is the machine's key ([§2.5](#25-keptmachine)).|
+|`'@NewMachine`|Member annotation|Immediately above the procedure, with its HTTP method annotations.|None ([§2.6](#26-newmachine)).|
 
 Annotation names are compared without regard to case, as RD-VBA names are: `'@httpget` is `'@HttpGet`. A `'@Controller` below the first procedure of a
 module is not in its declarations section, and does not make it a controller.
@@ -164,6 +166,62 @@ further parameter that neither the route nor the body binds.
 |[`RDWebEndpoint.FromAnnotation`](xref:RDCore.Web.Endpoints.RDWebEndpoint.FromAnnotation*)|Takes the argument as `bodyParameter`; `null` when the procedure has none.|
 
 ---
+## 2.5 `'@KeptMachine`
+
+### Syntax
+
+```vb
+'@Controller("api/games/{game}")
+'@KeptMachine("game")
+Option Explicit
+```
+
+The argument is a string literal: the name of a parameter of the controller's routes.
+
+### Static Semantics
+
+|Case|Effect|
+|---|---|
+|Every endpoint of the controller|Keyed by the value of the route parameter named. A request runs on its key's machine ([§6.2](rdweb.6.0.machines.md#62-kept-machines)).|
+|The procedure has a parameter of that name|The route value binds to it, as any route value does.|
+|The procedure has none|The route value binds nothing: the key need not be a parameter of the procedure.|
+|An endpoint whose route has no parameter of that name|An error: `FromAnnotation` throws `RDWebEndpointException`, whose message names the key, the module and the procedure.|
+
+### Implementation
+
+|Type or member|Role|
+|---|---|
+|[`RDWebAnnotations.KeptMachine`](xref:RDCore.Web.Endpoints.RDWebAnnotations.KeptMachine)|The annotation's name.|
+|[`RDWebEndpoint.KeptMachineKey`](xref:RDCore.Web.Endpoints.RDWebEndpoint.KeptMachineKey)|The route parameter named; `null` for an endpoint whose requests run on a machine of the pool.|
+
+---
+## 2.6 `'@NewMachine`
+
+### Syntax
+
+```vb
+'@HttpPost("new")
+'@NewMachine
+Public Sub NewGame()
+    ' ...
+End Sub
+```
+
+The annotation takes no argument.
+
+### Static Semantics
+
+A request to the endpoint makes its key's machine, then runs the procedure on it. A request to any other endpoint of the controller runs on the machine its
+key has. A `'@NewMachine` in a controller without `'@KeptMachine` is an error: `FromAnnotation` throws `RDWebEndpointException`.
+
+### Implementation
+
+|Type or member|Role|
+|---|---|
+|[`RDWebAnnotations.NewMachine`](xref:RDCore.Web.Endpoints.RDWebAnnotations.NewMachine)|The annotation's name.|
+|[`RDWebEndpoint.MakesMachine`](xref:RDCore.Web.Endpoints.RDWebEndpoint.MakesMachine)|Whether a request makes its key's machine.|
+
+---
 ## Other annotations
 
 An annotation of any other name declares no endpoint: `FromAnnotation` returns `null` for it, and a procedure with only such annotations is not served.
@@ -193,3 +251,6 @@ An annotation of any other name declares no endpoint: `FromAnnotation` returns `
 |`'@Controller` only in the declarations section, or above a block's header|`RDWebEndpointReaderTests.AControllerAnnotationAfterTheFirstProcedure_DoesNotMakeTheModuleAController`, `RDWebEndpointReaderTests.InAFileOfBlocks_AControllerAnnotationAboveABlocksHeader_MakesThatBlocksModuleAController`|
 |Only a public `Sub` or `Function` serves an endpoint|`RDWebEndpointReaderTests.AProcedureThatIsNotPublic_ServesNoEndpoint`, `RDWebEndpointReaderTests.AProcedureWithAnImplicitAccessModifier_IsPublic_AndASubServesAnEndpointToo`|
 |One endpoint per HTTP method annotation, in the order written|`RDWebEndpointReaderTests.EachHttpMethodAnnotationOfAProcedure_IsAnEndpoint_InTheOrderWritten_AndOtherAnnotationsAreNone`|
+|`'@KeptMachine` keys each endpoint of its controller; `'@NewMachine` marks only its own|`RDWebEndpointReaderTests.AKeptMachineAnnotationOfAController_KeysEachOfItsEndpoints_AndNewMachineMakesTheMachineOnlyWhereItIsWritten`, `RDWebEndpointReaderTests.AControllerWithoutKeptMachine_KeysNoEndpoint`, `RDWebEndpointTests.AnEndpointThatMakesTheMachine_SaysSo`|
+|The key need not be a parameter of the procedure, and binds one of its name|`RDWebEndpointTests.TheMachinesKey_NeedNotBeAParameterOfTheProcedure_AndThePostBodyBindsTheFirstParameterAfterIt`, `RDWebEndpointTests.TheMachinesKey_BindsTheProcedureParameterOfItsName_WhenTheProcedureHasOne`, `RDWebEndpointTests.AnotherRouteParameterOfAKeptMachinesEndpoint_StillNamesAParameterOfTheProcedure`|
+|A key the route lacks, or `'@NewMachine` without `'@KeptMachine`, is an error|`RDWebEndpointTests.AMachinesKeyThatIsNoParameterOfTheRoute_IsAnEndpointException_NamingIt`, `RDWebEndpointTests.AnEndpointThatMakesAMachine_WithNoKeyToMakeItFor_IsAnEndpointException`, `RDWebEndpointReaderTests.NewMachineInAControllerWithoutKeptMachine_IsAnEndpointException`|

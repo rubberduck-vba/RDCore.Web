@@ -134,6 +134,39 @@ public sealed class RDWebEndpointReaderTests
     }
 
     [TestMethod]
+    public void AKeptMachineAnnotationOfAController_KeysEachOfItsEndpoints_AndNewMachineMakesTheMachineOnlyWhereItIsWritten()
+    {
+        var parse = Parse([Procedure("NewGame", 4, 6, MemberKind.Procedure), Procedure("Events", 8, 10)],
+            Annotated(0, RDWebAnnotations.Controller, "api/games/{game}"),
+            Annotated(1, RDWebAnnotations.KeptMachine, "game"),
+            Annotated(2, RDWebAnnotations.HttpPost, "new"),
+            Annotated(3, RDWebAnnotations.NewMachine),
+            Annotated(7, RDWebAnnotations.HttpGet, "events"));
+
+        var endpoints = RDWebEndpointReader.Read(parse, "GamesController");
+
+        CollectionAssert.AreEqual(new[] { "game", "game" }, endpoints.Select(endpoint => endpoint.KeptMachineKey).ToArray());
+        CollectionAssert.AreEqual(new[] { true, false }, endpoints.Select(endpoint => endpoint.MakesMachine).ToArray());
+    }
+
+    [TestMethod]
+    public void AControllerWithoutKeptMachine_KeysNoEndpoint()
+    {
+        var parse = Parse([Procedure("Hello", 3, 6)], Annotated(0, RDWebAnnotations.Controller, "api"), Annotated(2, RDWebAnnotations.HttpGet, "hello"));
+
+        Assert.IsNull(RDWebEndpointReader.Read(parse, "Greetings").Single().KeptMachineKey);
+    }
+
+    [TestMethod]
+    public void NewMachineInAControllerWithoutKeptMachine_IsAnEndpointException()
+    {
+        var parse = Parse([Procedure("Hello", 3, 6)],
+            Annotated(0, RDWebAnnotations.Controller, "api"), Annotated(1, RDWebAnnotations.HttpGet, "hello"), Annotated(2, RDWebAnnotations.NewMachine));
+
+        Assert.ThrowsExactly<RDWebEndpointException>(() => RDWebEndpointReader.Read(parse, "Greetings"));
+    }
+
+    [TestMethod]
     public void InAFileOfBlocks_AControllerAnnotationAboveABlocksHeader_MakesThatBlocksModuleAController()
     {
         // 0-1 above Greetings' header; 2 the header; 3 above Hello; 4-6 Hello; 7 the end. 8 Other's header; 9 above Bye; 10-11 Bye; 12 the end.

@@ -8,8 +8,9 @@ namespace RDCore.Web.Endpoints;
 
 /// <summary>
 /// Reads the endpoints a module declares from its annotations: <c>'@Controller</c> in its declarations section, or above the header of its block
-/// (<c>Module Name</c>, <c>Class Name</c>) for the module of a block of a file, and <c>'@HttpGet</c> or <c>'@HttpPost</c> immediately above each public
-/// <c>Sub</c> or <c>Function</c> that serves one, with the <c>'@FromBody</c> that names its body parameter.
+/// (<c>Module Name</c>, <c>Class Name</c>) for the module of a block of a file, with the <c>'@KeptMachine</c> that names its machines' key, and
+/// <c>'@HttpGet</c> or <c>'@HttpPost</c> immediately above each public <c>Sub</c> or <c>Function</c> that serves one, with the <c>'@FromBody</c> that
+/// names its body parameter and the <c>'@NewMachine</c> that makes its key's machine.
 /// </summary>
 public static class RDWebEndpointReader
 {
@@ -41,6 +42,11 @@ public static class RDWebEndpointReader
         }
 
         var controllerRoute = controller.GetStringArgument();
+
+        // a '@KeptMachine without an argument names an empty key, which no route parameter has: each endpoint of the module refuses it.
+        var keptMachineKey = parse.GetModuleAnnotations().FirstOrDefault(annotation => annotation.IsNamed(RDWebAnnotations.KeptMachine)) is { } kept
+            ? kept.GetStringArgument() ?? string.Empty
+            : null;
         foreach (var procedure in module.Children.OfType<MemberDeclarationNode>().Where(IsPublicProcedure))
         {
             var annotations = parse.GetAnnotations(procedure);
@@ -48,7 +54,8 @@ public static class RDWebEndpointReader
             if (methods.Length > 0)
             {
                 var body = annotations.FirstOrDefault(annotation => annotation.IsNamed(RDWebAnnotations.FromBody))?.GetStringArgument();
-                yield return new RDWebAction(moduleName, controllerRoute, procedure, methods, body);
+                var makesMachine = annotations.Any(annotation => annotation.IsNamed(RDWebAnnotations.NewMachine));
+                yield return new RDWebAction(moduleName, controllerRoute, procedure, methods, body, keptMachineKey, makesMachine);
             }
         }
     }

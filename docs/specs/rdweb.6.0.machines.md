@@ -4,6 +4,9 @@ A machine is one runtime session of the application's program, and it runs one p
 variables, `Static` locals, objects, open files, error state and current directory. Each request runs on a machine it has alone until its answer, so two
 requests never share that state, and a procedure needs no locks. Requests run at the same time on several machines.
 
+The endpoints of a controller with `'@KeptMachine` run on kept machines instead ([§6.2](#62-kept-machines)): each key has a machine of its own, and its
+requests share that machine's state, one request at a time.
+
 > [!NOTE]
 > **Not implemented.** The RDCore.Web host composes no program ([§7.2](rdweb.7.0.hosting.md#72-the-rdcoreweb-host)), so no machine runs an RD-VBA
 > procedure. The pool runs the machines of the program an application gives it.
@@ -57,12 +60,55 @@ A machine sees an interruption only once a call outside the program, to a `Decla
 deadlines is abandoned.
 
 ---
+## 6.2 Kept Machines
+
+A controller with `'@KeptMachine` ([§2.5](rdweb.2.0.annotations.md#25-keptmachine)) keeps a machine for each value of its key's route parameter. A request
+runs on its key's machine, which is never reset: its module-level variables, its objects and the rest of its state are what the key's earlier requests left.
+A game, a wizard or any other conversation of several requests keeps its state in a standard module.
+
+### Static Semantics
+
+The registry's limits are its options. A registry whose options are out of range is not made: its constructor throws an `ArgumentOutOfRangeException`.
+
+|Option|Default|Valid values|Meaning|
+|---|---|---|---|
+|`MaxMachines`|`100`|`1` or more.|The machines kept at most.|
+|`IdleTimeout`|20 minutes|Positive.|How long a machine is kept without a request.|
+|`RequestTimeout`|90 seconds|Positive.|How long a request may take, from its arrival to its answer, its wait for its machine included.|
+|`StopTimeout`|5 seconds|Positive.|How long a machine has to stop, past the deadline of its request, before it is abandoned.|
+
+An application that maps the endpoints of such a controller gives `MapRDWebEndpoints` a registry. Mapping them without one throws an `ArgumentException`.
+
+### Runtime Semantics
+
+|When|The registry|Response|
+|---|---|---|
+|A request to a `'@NewMachine` endpoint, and its key has no machine|Makes the machine, then runs the procedure on it.|As [§5.0](rdweb.5.0.responses.md) describes.|
+|The same, and its key has a machine|Runs nothing.|`409 Conflict`, with problem details.|
+|The same, and `MaxMachines` machines are kept|Runs nothing, and keeps every machine.|`503 Service Unavailable`, with problem details and a `Retry-After` of one second.|
+|A request to another endpoint, and its key has no machine|Runs nothing.|`404 Not Found`, with problem details.|
+|A request to another endpoint, and its key has a machine|Runs the procedure on it once it is free: one request at a time, in the order they arrive. A request waits without holding a thread.|As [§5.0](rdweb.5.0.responses.md) describes.|
+|The procedure completed, raised a run-time error, or was not found|Keeps the machine.|As [§5.0](rdweb.5.0.responses.md) describes.|
+|The procedure ran an `End` statement|Disposes the machine: its key has none afterwards.|`204 No Content`.|
+|The procedure ended any other way, or the machine failed|Disposes the machine.|As [§5.3](rdweb.5.0.responses.md#53-other-outcomes) describes.|
+|A request waits for a machine that is then disposed|Runs nothing.|`404 Not Found`.|
+|A machine has had no request for `IdleTimeout`|Disposes it. A request that holds its machine stops its idle time, and its answer starts it again.|None.|
+|It is disposed|Takes no more requests. It disposes each free machine at once, and each other machine when its request ends.|None.|
+
+The deadlines are those of the pool ([§6.1](#deadlines)), without a reset: a request that waits for its machine past `RequestTimeout` is refused and never
+runs, one that runs past it is interrupted and its machine disposed, and a machine that has not stopped `StopTimeout` later is abandoned. A client that
+aborts a request while it waits leaves the machine to the next one.
+
+---
 ## Implementation
 
 |Type or member|Role|
 |---|---|
 |[`RDWebMachinePool`](xref:RDCore.Web.Machines.RDWebMachinePool)|The pool: borrows a machine for each request, returns, resets, recycles and abandons them.|
 |[`RDWebMachinePoolOptions`](xref:RDCore.Web.Machines.RDWebMachinePoolOptions)|The pool's size and limits.|
+|[`RDWebKeptMachines`](xref:RDCore.Web.Machines.RDWebKeptMachines)|The kept machines: makes a machine for a key, runs each request of the key on it, and disposes it.|
+|[`RDWebKeptMachinesOptions`](xref:RDCore.Web.Machines.RDWebKeptMachinesOptions)|The registry's limits.|
+|[`RDWebKeptMachineAnswer`](xref:RDCore.Web.Machines.RDWebKeptMachineAnswer)|What a request to a kept machine reached: what the machine answered, or why it reached none.|
 |[`IComposedProgram`](xref:RDCore.SDK.Runtime.Hosting.IComposedProgram)|The program the pool makes its machines from.|
 |[`IProgramMachine`](xref:RDCore.SDK.Runtime.Hosting.IProgramMachine)|A machine: it runs a procedure, and resets.|
 
@@ -88,3 +134,15 @@ deadlines is abandoned.
 |Disposing the pool disposes its machines|`RDWebMachinePoolTests.DisposingThePool_DisposesItsIdleMachines_AndOneServingARequestOnceItEnds`|
 |A pool of an invalid size is not started|`RDWebMachinePoolTests.APoolOfAnInvalidSize_IsRefused`|
 |A pool with a limit that is not positive is not started|`RDWebMachinePoolTests.APoolWithALimitThatIsNotPositive_IsRefused`|
+|A key's requests run on the machine its first made, never reset; two keys have two machines|`RDWebKeptMachinesTests.ARequestThatMakesAMachine_RunsOnIt_AndEveryLaterRequestOfItsKeyRunsOnTheSameMachine_NeverReset`, `RDWebKeptMachinesTests.TwoKeys_EachHaveAMachineOfTheirOwn`, `RDWebKeptMachinesHostingTests.ARequestThatMakesItsKeysMachine_RunsOnIt_AndTheKeysLaterRequestsRunOnTheSameMachine`|
+|A key with no machine, or one that has one already, runs nothing|`RDWebKeptMachinesTests.ARequestForAKeyWithNoMachine_ReachesNone`, `RDWebKeptMachinesTests.ARequestThatMakesAMachineForAKeyThatHasOne_IsNotRun`, `RDWebKeptMachinesHostingTests.ARequestOfAKeyWithNoMachine_AnswersNotFound_AndMakesNone`, `RDWebKeptMachinesHostingTests.ARequestThatMakesAMachineForAKeyThatHasOne_AnswersConflict_AndRunsNothing`|
+|A machine more than `MaxMachines` is refused, and no machine is evicted|`RDWebKeptMachinesTests.ARequestThatWouldMakeOneMachineMoreThanTheMaximum_IsRefused_AndTheKeptMachinesStay`, `RDWebKeptMachinesHostingTests.ARequestThatWouldMakeOneMachineMoreThanTheMaximum_AnswersServiceUnavailable_WithWhenToRetry`|
+|A key's requests run one at a time, in the order they arrive|`RDWebKeptMachinesTests.TwoRequestsOfOneKey_RunOneAtATime_InTheOrderTheyArrive`, `RDWebKeptMachinesTests.ARequestOfAKeyWhoseMachineIsBeingMade_WaitsForIt_AndRunsOnIt`|
+|Completed, a run-time error and not found keep the machine; anything else disposes it|`RDWebKeptMachinesTests.AMachineWhoseRequestEndedAsARunEnds_IsKept`, `RDWebKeptMachinesTests.AMachineWhoseRequestEndedAnyOtherWay_IsDisposed_AndItsKeyHasNoMachine`, `RDWebKeptMachinesTests.AMachineWhoseInvocationThrows_IsDisposed_AndItsKeyHasNoMachine`, `RDWebKeptMachinesTests.AMachineThatCannotBeMade_LeavesItsKeyFree`|
+|`End` disposes the machine and answers `204`|`RDWebKeptMachinesHostingTests.AProcedureThatEndsItsMachine_AnswersNoContent_AndItsKeyHasNoMachineAfterwards`|
+|A request that waits for a machine then disposed reaches none|`RDWebKeptMachinesTests.ARequestThatWaitsForAMachineThatThenEnds_ReachesNone`|
+|A machine idle for `IdleTimeout` is disposed; a busy one is not idle|`RDWebKeptMachinesTests.AMachineWithNoRequestForItsIdleTimeout_IsDisposed_AndEachRequestRestartsTheTimeout`, `RDWebKeptMachinesTests.AMachineServingARequest_IsNotIdle`|
+|The deadlines and an aborted wait|`RDWebKeptMachinesTests.ARequestThatWaitsForItsMachinePastItsDeadline_IsRefused_AndNeverRuns`, `RDWebKeptMachinesTests.ARequestCancelledWhileItWaits_DoesNotRun`, `RDWebKeptMachinesTests.ARequestWhoseMachineDoesNotStopAfterItsDeadline_AnswersInterrupted_AndItsMachineIsDisposedOnceItEnds`|
+|Disposing the registry disposes its machines|`RDWebKeptMachinesTests.DisposingTheRegistry_DisposesAFreeMachineNow_AndABusyOneOnceItsRequestEnds`|
+|A registry with a limit that is not positive is not made|`RDWebKeptMachinesTests.ARegistryWithALimitThatIsNotPositive_IsRefused`|
+|Endpoints that keep machines need a registry|`RDWebKeptMachinesHostingTests.EndpointsThatKeepMachines_MappedWithNoKeptMachines_AreAnArgumentException`|

@@ -36,6 +36,7 @@ End Function
 |Diagnostics: a `POST` that names no body parameter, and each further parameter that neither its route nor its body binds|Works in an RDCore platform that loads the RDWeb extension, with a quick fix that adds `'@FromBody`.|
 |Responses: the procedure's value as JSON, no value, a run-time error as a problem details body|Works.|
 |A pool of machines, each running one request at a time|Works.|
+|Kept machines: a machine for each key of a controller with `'@KeptMachine`, made by `'@NewMachine` and never reset between its requests|Works.|
 |JSON values: objects of the workspace's classes, typed arrays and `Collection`, and the `RDJson` library for VBA code|Works in RDCore's runtime. No endpoint reaches it: see the note below.|
 |The host: a page that calls an endpoint and shows its answer|Works. The host maps no endpoint.|
 
